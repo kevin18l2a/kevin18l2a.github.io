@@ -17,7 +17,7 @@ function caculateTogetherDays(){
     var today = Date.now();
     var diffTime = Math.abs(today - begin);
     var togetherDays = Math.ceil((diffTime / (1000 * 60 * 60 * 24))+1);
-    $("#together_days").text(togetherDays);
+    $("#together_days").text("Together with baby for "+togetherDays+" days!");
 }
     
 function showToDoList(value) {
