@@ -8,7 +8,10 @@
 <script>
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
     json.forEach(element=>
-        if (False):
+        if(false){
             $("#todo_List").append("<p>"+element.id+". "+element.title+"</p>");
+        else{
+            $("#todo_List").append("<p>else</p>");
+        }
     )})
 </script>
