@@ -29,7 +29,7 @@ function showToDoList(json){
        if(element.status == "y"){
           finishCount = finishCount+1;
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished) </p>");
-       }else if(value.status == "y-np"){
+       }else if(element.status == "y-np"){
           finishNoPhotoCount = finishNoPhotoCount+1;
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
        }else{
