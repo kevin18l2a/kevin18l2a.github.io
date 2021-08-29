@@ -1,7 +1,14 @@
 
-Hello javascript
 
-personal token : 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
+<h1>100 things to do with my babe</h1>
+
+
+<div id="todo_List"></div>
+
+
+
+
+
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
@@ -10,6 +17,7 @@ var a = 1;
 console.log("hello world");
 
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
+    $("#todo_List").append("<p>"+json+"</p>")
     console.log(json); // this will show the info it in firebug console
 });
 
