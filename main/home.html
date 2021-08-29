@@ -1,14 +1,21 @@
 
 <h1>100 things to do with my babe</h1>
-
+<div id="together_days"><div>
 <div id="todo_List"></div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script>
+    
+setInterval( caculateTogetherDays , 3000 );
+    
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
     json.forEach(showToDoList);
 })
+    
+function caculateTogetherDays(){
+    alert("day");
+}
     
 function showToDoList(value) {
      if(false){
