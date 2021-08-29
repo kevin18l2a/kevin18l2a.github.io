@@ -1,4 +1,3 @@
-t
 <h1>100 things to do with my babe</h1>
 <div id="together_days"><div>
 <div id="todo_List"></div>
@@ -7,7 +6,9 @@ t
 
 <script>
     
-setInterval( caculateTogetherDays , 3000 );
+$(document).ready(function() {
+  caculateTogetherDays();
+});
     
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
     json.forEach(showToDoList);
@@ -25,4 +26,5 @@ function showToDoList(value) {
           $("#todo_List").append("<p>else</p>");
      }
 }
+    
 </script>
