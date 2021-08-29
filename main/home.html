@@ -7,6 +7,7 @@
 
 <script>
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
-    $("#todo_List").append("<p>"+json["id"]+":"+json["title"]+"</p>")
+    const obj = JSON.parse(json);
+    $("#todo_List").append("<p>"+obj.id+":"obj.title+"</p>")
 });
 </script>
