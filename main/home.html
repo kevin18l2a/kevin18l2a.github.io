@@ -1,5 +1,6 @@
 <h1>100 things to do with my babe</h1>
 <div id="together_days"></div>
+<div id="complete_ratio"></div>
 <div id="todo_List"></div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -21,11 +22,20 @@ function caculateTogetherDays(){
 }
     
 function showToDoList(value) {
-     if(false){
-          $("#todo_List").append("<p>"+value.id+". "+value.title+"</p>");
+     var finishCount = 0;
+     var finishNoPhoteCount = 0;
+     if(value.status == "y"){
+          finishCount += finishCount;
+          $("#todo_List").append("<p> (Finished) "+value.id+". "+value.title+"</p>");
+     }else if(value.status == "y-np"){
+          finishNoPhoteCount += finishNoPhoteCount;
+          $("#todo_List").append("<p> (Finished, but without photo) "+value.id+". "+value.title+"</p>");
      }else{
-          $("#todo_List").append("<p>else</p>");
+          $("#todo_List").append("<p> (not yet) "+value.id+". "+value.title+"</p>");
      }
+    
+    $("#complete_ratio").text("Complete Ratio: "+((finishCount+finishNoPhoteCount)/100)+", but there are "+finishNoPhoteCount+" without photo.");
+    
 }
     
 </script>
