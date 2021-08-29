@@ -7,9 +7,9 @@
 
 <script>
     
-caculateTogetherDays();  
-  
+caculateTogetherDays();    
 $.getJSON("https://kevin18l2a.github.io/src/test.json", showToDoList )
+    
     
 function caculateTogetherDays(){
     var begin = new Date("2021-07-01");
@@ -20,27 +20,24 @@ function caculateTogetherDays(){
 }
 
 function showToDoList(json){
+  
+    var finishCount = 0;
+    var finishNoPhotoCount = 0;
+    
     for(idx in json){
-        console.log(json[idx]);
+        element = json[idx];
+       if(element.status == "y"){
+          finishCount = finishCount+1;
+          $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished) </p>");
+       }else if(value.status == "y-np"){
+          finishNoPhotoCount = finishNoPhotoCount+1;
+          $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
+       }else{
+          $("#todo_List").append("<p>"+element.id+". "+element.title+" (not yet) </p>");
+       }
     }
     
+    $("#complete_ratio").text("Completed Ratio: "+((finishCount+finishNoPhotoCount)/100)+", but there are "+finishNoPhotoCount+" without photo.");
 }
-    
-// function showToDoList(value) {
-//      var finishCount = 0;
-//      var finishNoPhotoCount = 0;
-//      if(value.status == "y"){
-//           finishCount = finishCount+1;
-          
-//           $("#todo_List").append("<p>"+value.id+". "+value.title+" (Finished) </p>");
-//      }else if(value.status == "y-np"){
-//           finishNoPhotoCount = finishNoPhotoCount+1;
-//           $("#todo_List").append("<p>"+value.id+". "+value.title+" (Finished, but without photo) </p>");
-//      }else{
-//           $("#todo_List").append("<p>"+value.id+". "+value.title+" (not yet) </p>");
-//      }
-//     $("#complete_ratio").text("Completed Ratio: "+((finishCount+finishNoPhotoCount)/100)+", but there are "+finishNoPhotoCount+" without photo.");
-    
-//}
     
 </script>
