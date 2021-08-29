@@ -21,23 +21,23 @@ function caculateTogetherDays(){
 
 function showToDoList(json){
   
-    var finishCount = 0;
-    var finishNoPhotoCount = 0;
+    var finishWithPhotoCount = 0;
+    var finishWithoutPhotoCount = 0;
     
     for(idx in json){
         element = json[idx];
        if(element.status == "y"){
-          finishCount = finishCount+1;
+          finishWithPhotoCount = finishWithPhotoCount+1;
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished) </p>");
        }else if(element.status == "y-np"){
-          finishNoPhotoCount = finishNoPhotoCount+1;
+          finishWithoutPhotoCount = finishWithoutPhotoCount+1;
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
        }else{
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (not yet) </p>");
        }
     }
-    
-    $("#complete_ratio").text("Completed Ratio: "+(finishCount+finishNoPhotoCount)+"%. "+finishCount+" things have been finished from 100 things! but there are also "+finishNoPhotoCount+" without photos.");
+    var finishCount = finishWithPhotoCount = finishWithPhotoCount
+    $("#complete_ratio").text("Completed Ratio: "+finishCount+"%.</n> "+finishWithPhotoCount+" things have been finished from 100 things, but there are also "+finishWithoutPhotoCount+" without photos.");
 }
     
 </script>
