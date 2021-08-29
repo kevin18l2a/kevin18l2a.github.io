@@ -9,12 +9,7 @@
     
 caculateTogetherDays();  
   
-$.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
-    for(element in json){
-        console.log(element);
-    }
-//     json.forEach(showToDoList);
-})   
+$.getJSON("https://kevin18l2a.github.io/src/test.json", showToDoList )
     
 function caculateTogetherDays(){
     var begin = new Date("2021-07-01");
@@ -22,6 +17,13 @@ function caculateTogetherDays(){
     var diffTime = Math.abs(today - begin);
     var togetherDays = Math.ceil((diffTime / (1000 * 60 * 60 * 24))+1);
     $("#together_days").text("Together with baby for "+togetherDays+" days!");
+}
+
+function showToDoList(json){
+    for(element in json){
+        console.log(element);
+    }
+    
 }
     
 // function showToDoList(value) {
