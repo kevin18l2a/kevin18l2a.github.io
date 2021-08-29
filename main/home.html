@@ -36,7 +36,7 @@ function showToDoList(json){
           $("#todo_List").append("<p>"+element.id+". "+element.title+" (not yet) </p>");
        }
     }
-    var finishCount = finishWithPhotoCount = finishWithPhotoCount
+    var finishCount = finishWithPhotoCount + finishWithPhotoCount
     $("#complete_ratio").text("Completed Ratio: "+finishCount+"%.</n> "+finishWithPhotoCount+" things have been finished from 100 things, but there are also "+finishWithoutPhotoCount+" without photos.");
 }
     
