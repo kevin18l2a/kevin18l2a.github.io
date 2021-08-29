@@ -7,6 +7,9 @@
 
 <script>
 $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
-    $("#todo_List").append("<p>"+typeof(json)+"</p>")
+    json.forEach(element=>
+        $("#todo_List").append("<p>"+element.title+"</p>")
+    )
+    
 });
 </script>
