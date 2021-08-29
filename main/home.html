@@ -8,11 +8,12 @@
     
 $(document).ready(function() {
   caculateTogetherDays();
-});
     
-$.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
+  $.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
     json.forEach(showToDoList);
-})
+  })
+    
+});
     
 function caculateTogetherDays(){
     var d = new Date("2021-07-01");
