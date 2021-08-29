@@ -6,7 +6,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script>
-$.getJSON("https://kevin18l2a.github.io/src/test.json", function(item) {
-    $("#todo_List").append("<p>"+item["id"]+":"+item["title"]+"</p>")
+$.getJSON("https://kevin18l2a.github.io/src/test.json", function(json) {
+    $("#todo_List").append("<p>"+json["id"]+":"+json["title"]+"</p>")
 });
 </script>
