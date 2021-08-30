@@ -38,12 +38,12 @@ function showToDoList(json){
         var itemID = "item_"+element.id;
        if(element.status == "y"){
           finishWithPhotoCount = finishWithPhotoCount+1;
-          $("#todo_List").append("<p id='"+itemID+"' name='Finished'>"+element.id+". "+element.title+" (Finished) </p>");
+          $("#todo_List").append("<div id='"+itemID+"' name='Finished' class='list-group-item list-group-item-success'>"+element.id+". "+element.title+" (Finished) </div>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<p id='"+itemID+"' name='InProgress'>"+element.id+". "+element.title+" (In Progress) </p>");
+          $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info'>"+element.id+". "+element.title+" (In Progress) </div>");
        }else{
-          $("#todo_List").append("<p id='"+itemID+"' name='ToDo'>"+element.id+". "+element.title+" (To Do) </p>");
+          $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning'>"+element.id+". "+element.title+" (To Do) </div>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
