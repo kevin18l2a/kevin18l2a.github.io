@@ -57,31 +57,32 @@ function showToDoList(json){
 }
     
 function showAll(){
-    $('[name="Finished"]').show()
-    $('[name="InProgress"]').show()
-    $('[name="ToDo"]').show()
+    $('[name="Finished"]').show();
+    $('[name="InProgress"]').show();
+    $('[name="ToDo"]').show();
 }
     
 function showFinished(){
-    $('[name="Finished"]').show()
-    $('[name="InProgress"]').hide()
-    $('[name="ToDo"]').hide()
+    $('[name="Finished"]').show();
+    $('[name="InProgress"]').hide();
+    $('[name="ToDo"]').hide();
 }
     
 function showInProgress(){
-    $('[name="Finished"]').hide()
-    $('[name="InProgress"]').show()
-    $('[name="ToDo"]').hide()
+    $('[name="Finished"]').hide();
+    $('[name="InProgress"]').show();
+    $('[name="ToDo"]').hide();
 }
     
 function showToDo(){
-    $('[name="Finished"]').hide()
-    $('[name="InProgress"]').hide()
-    $('[name="ToDo"]').show()
+    $('[name="Finished"]').hide();
+    $('[name="InProgress"]').hide();
+    $('[name="ToDo"]').show();
 }
 
 function itemOnClick(itemID){
-    alert($('[id="'+itemID+'"]').text());
+    alert(itemID);
+    console.log( $('[id="'+itemID+'"]').text() );
 }
     
 </script>
