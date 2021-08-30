@@ -44,12 +44,12 @@ function showToDoList(json){
         var itemID = "item_"+element.id;
        if(element.status == "y"){
           finishWithPhotoCount = finishWithPhotoCount+1;
-          $("#todo_List").append("<div id='"+itemID+"' name='Finished' class='list-group-item list-group-item-success' onclick='itemOnClick("+itemID+")'>"+element.id+". "+element.title+" (Finished) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='Finished' class='list-group-item list-group-item-success' onclick='itemOnClick('"+itemID+"')'>"+element.id+". "+element.title+" (Finished) </div>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info' onclick='itemOnClick("+itemID+")'>"+element.id+". "+element.title+" (In Progress) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info' onclick='itemOnClick('"+itemID+"')'>"+element.id+". "+element.title+" (In Progress) </div>");
        }else{
-          $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning' onclick='itemOnClick("+itemID+")'>"+element.id+". "+element.title+" (To Do) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning' onclick='itemOnClick('"+itemID+"')'>"+element.id+". "+element.title+" (To Do) </div>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
