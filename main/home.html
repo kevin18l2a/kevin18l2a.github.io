@@ -50,7 +50,7 @@ function showToDoList(json){
           $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info' onclick='itemOnClick(this.id)'>"+element.id+". "+element.title+" (In Progress) </div>");
        }else{
           $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning' onclick='itemOnClick(this.id)'>"+element.id+". "+element.title+" (To Do) </div>");
-       }'
+       }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
     $("#complete_ratio").text("Completed Ratio: "+finishCount+"%. "+finishWithPhotoCount+" things have been finished from 100 things, but there are also "+finishWithoutPhotoCount+" without photos.");
