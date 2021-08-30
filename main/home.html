@@ -51,16 +51,27 @@ function showToDoList(json){
 }
     
 function showAll(){
-     console.log( $("#todo_List").find("*")[0].className )
+    $(".Finished").show()
+    $(".InProgress").show()
+    $(".ToDo").show()
 }
     
 function showFinished(){
+    $(".Finished").show()
+    $(".InProgress").hide()
+    $(".ToDo").hide()
 }
     
 function showInProgress(){
+    $(".Finished").hide()
+    $(".InProgress").show()
+    $(".ToDo").hide()
 }
     
 function showToDo(){
+    $(".Finished").hide()
+    $(".InProgress").hide()
+    $(".ToDo").show()
 }
     
 </script>
