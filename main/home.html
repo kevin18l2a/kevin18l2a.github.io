@@ -2,22 +2,22 @@
 <div id="together_days"></div>
 <div id="complete_ratio"></div>
 
-<button type="button" class="btn btn-warning">ALL</button>
-<button type="button" class="btn btn-success">FINISHED</button>
-<button type="button" class="btn btn-info">IN PROGRESS</button>
-<button type="button" class="btn">TO DO</button>
+<button id="btn_ALL" type="button" class="btn btn-warning">ALL</button>
+<button id="btn_FINSISHED" type="button" class="btn btn-success">FINISHED</button>
+<button id="btn_IN_PROGRESS" type="button" class="btn btn-info">IN PROGRESS</button>
+<button id="btn_TO_DO" type="button" class="btn">TO DO</button>
 
 <div id="todo_List"></div>
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
 <script>
     
 caculateTogetherDays();    
 $.getJSON("https://kevin18l2a.github.io/src/test.json", showToDoList )
-    
-    
+      
 function caculateTogetherDays(){
     var begin = new Date("2021-07-01");
     var today = Date.now();
@@ -33,14 +33,15 @@ function showToDoList(json){
     
     for(idx in json){
         element = json[idx];
+        var itemID = "item_"+element.id;
        if(element.status == "y"){
           finishWithPhotoCount = finishWithPhotoCount+1;
-          $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished) </p>");
+          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (Finished) </p>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<p>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
+          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
        }else{
-          $("#todo_List").append("<p>"+element.id+". "+element.title+" (not yet) </p>");
+          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (not yet) </p>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
