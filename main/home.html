@@ -20,12 +20,12 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 <script>
-    
-
-    
+   
 caculateTogetherDays();    
 $.getJSON("https://kevin18l2a.github.io/src/test.json", showToDoList )
-      
+$
+    
+    
 function caculateTogetherDays(){
     var begin = new Date("2021-07-01");
     var today = Date.now();
@@ -44,12 +44,12 @@ function showToDoList(json){
         var itemID = "item_"+element.id;
        if(element.status == "y"){
           finishWithPhotoCount = finishWithPhotoCount+1;
-          $("#todo_List").append("<div id='"+itemID+"' name='Finished' class='list-group-item list-group-item-success'>"+element.id+". "+element.title+" (Finished) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='Finished' class='list-group-item list-group-item-success' onclick='itemOnClick(this)'>"+element.id+". "+element.title+" (Finished) </div>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info'>"+element.id+". "+element.title+" (In Progress) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='InProgress' class='list-group-item list-group-item-info' onclick='itemOnClick(this)'>"+element.id+". "+element.title+" (In Progress) </div>");
        }else{
-          $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning'>"+element.id+". "+element.title+" (To Do) </div>");
+          $("#todo_List").append("<div id='"+itemID+"' name='ToDo' class='list-group-item list-group-item-warning' onclick='itemOnClick(this)'>"+element.id+". "+element.title+" (To Do) </div>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
@@ -78,6 +78,10 @@ function showToDo(){
     $('[name="Finished"]').hide()
     $('[name="InProgress"]').hide()
     $('[name="ToDo"]').show()
+}
+
+function itemOnClick(this){
+    console.log(this);
 }
     
 </script>
