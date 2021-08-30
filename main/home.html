@@ -38,12 +38,12 @@ function showToDoList(json){
         var itemID = "item_"+element.id;
        if(element.status == "y"){
           finishWithPhotoCount = finishWithPhotoCount+1;
-          $("#todo_List").append("<p id='"+itemID+"' class='Finished'>"+element.id+". "+element.title+" (Finished) </p>");
+          $("#todo_List").append("<p id='"+itemID+"' name='Finished'>"+element.id+". "+element.title+" (Finished) </p>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<p id='"+itemID+"' class='InProgress'>"+element.id+". "+element.title+" (In Progress) </p>");
+          $("#todo_List").append("<p id='"+itemID+"' name='InProgress'>"+element.id+". "+element.title+" (In Progress) </p>");
        }else{
-          $("#todo_List").append("<p id='"+itemID+"' class='ToDo'>"+element.id+". "+element.title+" (To Do) </p>");
+          $("#todo_List").append("<p id='"+itemID+"' name='ToDo'>"+element.id+". "+element.title+" (To Do) </p>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
@@ -51,27 +51,27 @@ function showToDoList(json){
 }
     
 function showAll(){
-    $(".Finished").show()
-    $(".InProgress").show()
-    $(".ToDo").show()
+    $('[name="Finished"]').show()
+    $('[name="InProgress"]').show()
+    $('[name="ToDo"]').show()
 }
     
 function showFinished(){
-    $(".Finished").show()
-    $(".InProgress").hide()
-    $(".ToDo").hide()
+    $('[name="Finished"]').show()
+    $('[name="InProgress"]').hide()
+    $('[name="ToDo"]').hide()
 }
     
 function showInProgress(){
-    $(".Finished").hide()
-    $(".InProgress").show()
-    $(".ToDo").hide()
+    $('[name="Finished"]').hide()
+    $('[name="InProgress"]').show()
+    $('[name="ToDo"]').hide()
 }
     
 function showToDo(){
-    $(".Finished").hide()
-    $(".InProgress").hide()
-    $(".ToDo").show()
+    $('[name="Finished"]').hide()
+    $('[name="InProgress"]').hide()
+    $('[name="ToDo"]').show()
 }
     
 </script>
