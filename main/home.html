@@ -2,10 +2,10 @@
 <div id="together_days"></div>
 <div id="complete_ratio"></div>
 
-<button id="btn_ALL" onclick="" type="button" class="btn btn-warning">ALL</button>
-<button id="btn_FINSISHED" type="button" class="btn btn-success">FINISHED</button>
-<button id="btn_IN_PROGRESS" type="button" class="btn btn-info">IN PROGRESS</button>
-<button id="btn_TO_DO" type="button" class="btn">TO DO</button>
+<button id="btn_ALL" onclick="showAll()" type="button" class="btn btn-warning">ALL</button>
+<button id="btn_FINSISHED" onclick="showFinished()" type="button" class="btn btn-success">FINISHED</button>
+<button id="btn_IN_PROGRESS" onclick="showInProgress()" type="button" class="btn btn-info">IN PROGRESS</button>
+<button id="btn_TO_DO" onclick="showToDo()" type="button" class="btn">TO DO</button>
 
 <div id="todo_List"></div>
 
@@ -14,6 +14,8 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 <script>
+    
+
     
 caculateTogetherDays();    
 $.getJSON("https://kevin18l2a.github.io/src/test.json", showToDoList )
@@ -39,13 +41,26 @@ function showToDoList(json){
           $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (Finished) </p>");
        }else if(element.status == "y-np"){
           finishWithoutPhotoCount = finishWithoutPhotoCount+1;
-          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (Finished, but without photo) </p>");
+          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (In Progress) </p>");
        }else{
-          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (not yet) </p>");
+          $("#todo_List").append("<p id='"+itemID+"'>"+element.id+". "+element.title+" (To Do) </p>");
        }
     }
     var finishCount = finishWithPhotoCount + finishWithoutPhotoCount;
     $("#complete_ratio").text("Completed Ratio: "+finishCount+"%. "+finishWithPhotoCount+" things have been finished from 100 things, but there are also "+finishWithoutPhotoCount+" without photos.");
+}
+    
+function showAll(){
+     alert( $("#todo_List").find("*") )
+}
+    
+function showFinished(){
+}
+    
+function showInProgress(){
+}
+    
+function showToDo(){
 }
     
 </script>
