@@ -1,162 +1,117 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>股價查詢</title>
+  <title>股票查詢網站</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: white;
-      text-align: center;
-      padding: 2rem;
+      font-family: 'Arial', sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
     }
-
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 2rem;
-      text-shadow: 2px 2px 10px #000;
-      color: #00e5ff;
+    .container {
+      text-align: center;
+      background: #333;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      max-width: 500px;
+      width: 100%;
     }
-
-    .search-container input {
-      padding: 1rem;
-      font-size: 1.5rem;
-      width: 50%;
-      max-width: 400px;
-      border-radius: 1rem;
-      border: none;
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 60%;
+      border: 1px solid #555;
+      border-radius: 5px;
+      background: #222;
+      color: #fff;
+      transition: all 0.3s;
+    }
+    input[type="text"]:focus {
+      border-color: #00bcd4;
       outline: none;
-      margin-bottom: 2rem;
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      transition: background 0.3s ease;
     }
-
-    .search-container input:focus {
-      background: rgba(255, 255, 255, 0.3);
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #00bcd4;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
     }
-
-    .stock-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2rem;
+    button:hover {
+      background: #0097a7;
     }
-
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 1rem;
-      padding: 2rem;
-      width: 250px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .result {
+      margin-top: 30px;
+      font-size: 24px;
+      color: #00bcd4;
+      transition: opacity 0.3s ease;
     }
-
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
-    }
-
-    .stock {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #00e5ff;
-    }
-
-    .price {
-      font-size: 2rem;
-      color: #ffeb3b;
-      margin-top: 1rem;
-    }
-
     .loading {
-      font-size: 1.5rem;
-      color: #f1c40f;
-    }
-
-    .error {
-      font-size: 1.2rem;
-      color: #ff4444;
+      color: #aaa;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-
-  <h1>🔥 即時股價查詢 🔥</h1>
-
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="輸入股票代號 (如: 2330)" oninput="filterStocks()">
-  </div>
-
-  <div id="stockGrid" class="stock-container">
-    <div class="loading">載入中...</div>
+  <div class="container">
+    <h1>股票查詢系統</h1>
+    <p>輸入股票代號查詢價格</p>
+    <input type="text" id="stockSymbol" placeholder="例如：2330" />
+    <button onclick="fetchStockPrice()">查詢</button>
+    <p class="loading" id="loading" style="display: none;">查詢中...</p>
+    <p class="result" id="result"></p>
   </div>
 
   <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
-    let stocks = [];
-
-    // 讀取 CSV 資料並解析
-    fetch(csvUrl)
-      .then(response => response.text())
-      .then(csvData => {
-        const rows = csvData.trim().split('\n');
-        const headers = rows[0].split(',');
-        const stockIndex = headers.indexOf('stock');
-        const priceIndex = headers.indexOf('price');
-
-        // 解析 CSV 資料
-        for (let i = 1; i < rows.length; i++) {
-          const cols = rows[i].split(',');
-          if (cols[stockIndex] && cols[priceIndex]) {
-            stocks.push({
-              stock: cols[stockIndex].trim(),
-              price: parseFloat(cols[priceIndex].trim())
-            });
-          }
-        }
-
-        // 在控制台打印解析後的資料結構
-        console.log('解析後的資料結構：', stocks);
-        
-        renderStocks(stocks); // 渲染股價
-      })
-      .catch(error => {
-        console.error('Error fetching CSV data:', error);
-        document.getElementById('stockGrid').innerHTML = '<div class="error">資料載入失敗，請稍後再試。</div>';
-      });
-
-    // 顯示資料
-    function renderStocks(stocksData) {
-      const container = document.getElementById('stockGrid');
-      container.innerHTML = ''; // 清空容器
-
-      if (stocksData.length === 0) {
-        container.innerHTML = '<div class="error">未找到匹配的股票代號。</div>';
+    async function fetchStockPrice() {
+      const stockSymbol = document.getElementById('stockSymbol').value.trim().toUpperCase();
+      const resultElement = document.getElementById('result');
+      const loadingElement = document.getElementById('loading');
+      
+      if (!stockSymbol) {
+        resultElement.textContent = '請輸入股票代號';
         return;
       }
+      
+      loadingElement.style.display = 'block';
+      resultElement.style.opacity = 0;
+      
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
+      const response = await fetch(url);
+      const data = await response.text();
+      const rows = data.split('\n');
+      let stockPrice = null;
 
-      stocksData.forEach(stock => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="stock">${stock.stock}</div>
-          <div class="price">$${stock.price.toFixed(2)}</div>
-        `;
-        container.appendChild(card);
-      });
-    }
+      for (let row of rows) {
+        const columns = row.split(',');
+        if (columns[0].trim().toUpperCase() === stockSymbol) {
+          stockPrice = columns[1];
+          break;
+        }
+      }
 
-    // 根據輸入過濾顯示的股票
-    function filterStocks() {
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-      const filteredStocks = stocks.filter(stock => stock.stock.toLowerCase().includes(searchQuery));
-      renderStocks(filteredStocks);
+      loadingElement.style.display = 'none';
+
+      if (stockPrice) {
+        resultElement.textContent = `股票代號 ${stockSymbol} 的價格是：${stockPrice} 元`;
+      } else {
+        resultElement.textContent = `未找到股票代號 ${stockSymbol}`;
+      }
+
+      resultElement.style.opacity = 1;
     }
   </script>
-
 </body>
 </html>
