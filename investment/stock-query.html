@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>即時股價展示</title>
+  <title>股價查詢 - 科技感介面</title>
   <style>
     body {
       margin: 0;
@@ -15,30 +15,55 @@
     }
 
     h1 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       margin-bottom: 2rem;
       text-shadow: 2px 2px 8px #000;
+      color: #00e5ff;
     }
 
-    .table {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    .search-container {
+      margin: 2rem 0;
+    }
+
+    .search-container input {
+      padding: 0.8rem 1rem;
+      font-size: 1.2rem;
+      border-radius: 1rem;
+      border: none;
+      outline: none;
+      width: 60%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background 0.3s ease;
+    }
+
+    .search-container input:focus {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .stock-container {
+      margin-top: 2rem;
+      font-size: 1.5rem;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
       gap: 2rem;
-      max-width: 900px;
-      margin: 0 auto;
     }
 
     .card {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 1rem;
       padding: 2rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      width: 250px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .card:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 25px rgba(255,255,255,0.3);
+      box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
     }
 
     .stock {
@@ -53,24 +78,34 @@
       color: #ffeb3b;
     }
 
-    .error {
-      color: #ff4444;
-      font-size: 1.2rem;
-    }
-
     .loading {
       font-size: 1.5rem;
       color: #f1c40f;
     }
+
+    .error {
+      font-size: 1.2rem;
+      color: #ff4444;
+    }
   </style>
 </head>
 <body>
-  <h1>🔥 即時股價展示 🔥</h1>
-  <div id="stockGrid" class="table">載入中...</div>
+  <h1>🔥 即時股價查詢 🔥</h1>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="請輸入股票代號 (如: 2330)" oninput="filterStocks()" />
+  </div>
+
+  <div id="stockGrid" class="stock-container">
+    <div class="loading">載入中...</div>
+  </div>
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
 
+    let stocks = [];
+
+    // 讀取 CSV 資料
     fetch(csvUrl)
       .then(res => res.text())
       .then(csv => {
@@ -78,30 +113,51 @@
         const headers = lines[0].split(',');
         const stockIndex = headers.indexOf('stock');
         const priceIndex = headers.indexOf('price');
-        const container = document.getElementById('stockGrid');
-        container.innerHTML = '';
 
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
-
           if (!cols[stockIndex] || !cols[priceIndex]) continue;
 
           const stock = cols[stockIndex].trim();
-          const price = cols[priceIndex].trim();
+          const price = parseFloat(cols[priceIndex].trim());
 
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="stock">${stock}</div>
-            <div class="price">$${parseFloat(price).toFixed(2)}</div>
-          `;
-          container.appendChild(card);
+          stocks.push({ stock, price });
         }
+
+        renderStocks(stocks);  // 顯示所有資料
       })
       .catch(err => {
         document.getElementById('stockGrid').innerHTML = '<div class="error">❌ 資料載入失敗，請稍後再試。</div>';
         console.error(err);
       });
+
+    // 根據搜尋結果過濾顯示股票
+    function filterStocks() {
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const filteredStocks = stocks.filter(stock => stock.stock.toLowerCase().includes(searchQuery));
+      renderStocks(filteredStocks);
+    }
+
+    // 顯示股票資料的函數
+    function renderStocks(stocksData) {
+      const container = document.getElementById('stockGrid');
+      container.innerHTML = '';  // 清空容器
+
+      if (stocksData.length === 0) {
+        container.innerHTML = '<div class="error">未找到匹配的股票代號</div>';
+        return;
+      }
+
+      stocksData.forEach(stock => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="stock">${stock.stock}</div>
+          <div class="price">$${stock.price.toFixed(2)}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
   </script>
 </body>
 </html>
