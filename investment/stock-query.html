@@ -1,158 +1,72 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>投資人投報率報表</title>
-  <!-- DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-  <style>
-    body {
-      background-color: #121212;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #00bcd4;
-    }
-    table.dataTable {
-      width: 100% !important;
-      border-collapse: collapse;
-    }
-    table.dataTable thead {
-      background-color: #1f1f1f;
-    }
-    table.dataTable thead th {
-      color: #00bcd4;
-    }
-    table.dataTable tbody tr:nth-child(even) {
-      background-color: #1e1e1e;
-    }
-    table.dataTable tbody tr:nth-child(odd) {
-      background-color: #2c2c2c;
-    }
-    table.dataTable tbody td {
-      color: #ffffff;
-    }
-    .positive {
-      color: #4caf50;
-    }
-    .negative {
-      color: #f44336;
-    }
-  </style>
+  <title>CSV 資料讀取與結構建立</title>
 </head>
 <body>
-  <h1>投資人投報率報表</h1>
-  <table id="roiTable" class="display">
-    <thead>
-      <tr>
-        <th>投資人</th>
-        <th>投報率 (%)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- 資料將由 JavaScript 動態插入 -->
-    </tbody>
-  </table>
+  <h1>開發者請打開 Console 看資料結構！</h1>
 
-  <!-- jQuery 和 DataTables JS -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
-    // 投資人報表 CSV URL
+    // Google Sheets CSV 連結
     const investorCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=856920333&single=true&output=csv';
-    // 價格報表 CSV URL
     const priceCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
-    // 讀取 CSV 並解析為陣列
+    // 股票價格資料: { 2330: { init: xxx, current: xxx }, ... }
+    const priceData = {};
+
+    // 投資人資料: { 豪: [{ percent: 30, stock: "PLTR" }, ...], ... }
+    const investorData = {};
+
     async function fetchCSV(url) {
       const response = await fetch(url);
       const text = await response.text();
-      const rows = text.trim().split('\n').map(row => row.split(','));
-      return rows;
+      return text.trim().split('\n').map(row => {
+        // 支援用逗號分隔但包含引號的格式
+        const match = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        return match ? match.map(v => v.replace(/^"|"$/g, '')) : [];
+      });
     }
 
-    // 主函式
     async function main() {
-      const investorData = await fetchCSV(investorCSV);
-      const priceData = await fetchCSV(priceCSV);
+      // 下載 CSV
+      const rawPrice = await fetchCSV(priceCSV);
+      const rawInvestor = await fetchCSV(investorCSV);
 
-      // 建立股票價格映射表
-      const priceMap = {};
-      for (let i = 1; i < priceData.length; i++) {
-        const [stock, price_init, price] = priceData[i];
-        priceMap[stock.trim().toUpperCase()] = {
-          init: parseFloat(price_init),
-          current: parseFloat(price)
+      // 1. 解析 price CSV
+      for (let i = 1; i < rawPrice.length; i++) {
+        const [stock, priceInit, priceCurrent] = rawPrice[i];
+        if (!stock || !priceInit || !priceCurrent) continue;
+        const symbol = stock.trim().toUpperCase();
+        priceData[symbol] = {
+          init: parseFloat(priceInit),
+          current: parseFloat(priceCurrent)
         };
       }
 
-      const roiResults = [];
+      // 2. 解析 investor CSV
+      for (let i = 1; i < rawInvestor.length; i++) {
+        const [name, rawHoldings] = rawInvestor[i];
+        if (!name || !rawHoldings) continue;
 
-      // 處理每位投資人
-      for (let i = 1; i < investorData.length; i++) {
-        const [investor, portfolioStr] = investorData[i];
-        const portfolioLines = portfolioStr.replace(/"/g, '').split('\n');
-        let totalInit = 0;
-        let totalCurrent = 0;
+        const lines = rawHoldings.split('\n');
+        investorData[name.trim()] = [];
 
-        for (const line of portfolioLines) {
+        for (const line of lines) {
           const match = line.trim().match(/^(\d+)%\s+(.+)$/);
           if (match) {
             const percent = parseFloat(match[1]);
             const stock = match[2].trim().toUpperCase();
-            const priceInfo = priceMap[stock];
-            if (priceInfo) {
-              totalInit += percent * priceInfo.init;
-              totalCurrent += percent * priceInfo.current;
-            } else {
-              console.warn(`找不到股票代碼：${stock}`);
-            }
+            investorData[name.trim()].push({ percent, stock });
           }
         }
-
-        const roi = ((totalCurrent - totalInit) / totalInit) * 100;
-        roiResults.push({
-          investor: investor.trim(),
-          roi: roi.toFixed(2)
-        });
       }
 
-      // 將結果插入表格
-      const tbody = document.querySelector('#roiTable tbody');
-      for (const result of roiResults) {
-        const tr = document.createElement('tr');
-        const tdInvestor = document.createElement('td');
-        tdInvestor.textContent = result.investor;
-        const tdROI = document.createElement('td');
-        tdROI.textContent = result.roi;
-        tdROI.classList.add(parseFloat(result.roi) >= 0 ? 'positive' : 'negative');
-        tr.appendChild(tdInvestor);
-        tr.appendChild(tdROI);
-        tbody.appendChild(tr);
-      }
-
-      // 初始化 DataTable
-      $('#roiTable').DataTable({
-        order: [[1, 'desc']],
-        language: {
-          search: "搜尋：",
-          lengthMenu: "顯示 _MENU_ 筆資料",
-          info: "顯示第 _START_ 至 _END_ 筆，共 _TOTAL_ 筆資料",
-          paginate: {
-            first: "第一頁",
-            last: "最後一頁",
-            next: "下一頁",
-            previous: "上一頁"
-          },
-          zeroRecords: "沒有符合的資料",
-        }
-      });
+      // 3. 印出資料結構
+      console.log('📊 價格資料 (priceData):', priceData);
+      console.log('👤 投資人資料 (investorData):', investorData);
     }
 
-    // 執行主函式
     main();
   </script>
 </body>
