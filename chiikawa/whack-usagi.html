@@ -10,39 +10,59 @@
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       text-align: center;
-      padding: 20px;
+      padding: 1rem;
+      margin: 0;
+      box-sizing: border-box;
     }
 
     h1 {
       color: #ff66cc;
       text-shadow: 0 0 10px #ff66cc;
+      font-size: 6vw;
+    }
+
+    #score, #time {
+      font-size: 4vw;
+      margin: 0.5rem;
+    }
+
+    #startBtn {
+      background-color: #ff66cc;
+      color: #000;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff66cc;
+      font-size: 4vw;
+      margin-top: 1rem;
     }
 
     #game {
       display: grid;
-      grid-template-columns: repeat(3, 100px);
-      grid-gap: 15px;
-      justify-content: center;
-      margin: 30px auto;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 3vw;
+      max-width: 90vw;
+      margin: 2rem auto;
     }
 
     .hole {
-      width: 100px;
-      height: 100px;
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1/1;
       background-color: #333;
       border-radius: 10px;
-      position: relative;
-      overflow: hidden;
       box-shadow: 0 0 10px #444;
-      cursor: pointer;
+      overflow: hidden;
     }
 
     .usagi {
+      position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: none;
-      position: absolute;
       top: 0;
       left: 0;
       z-index: 1;
@@ -53,15 +73,13 @@
       display: block;
     }
 
-    /* 爆炸光圈特效 */
     .hit-effect {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 80px;
-      height: 80px;
-      margin-left: -40px;
-      margin-top: -40px;
+      width: 60%;
+      height: 60%;
+      transform: translate(-50%, -50%);
       border-radius: 50%;
       background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255, 0, 255, 0.2));
       box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.5);
@@ -80,18 +98,17 @@
       100% { transform: rotate(180deg) scale(2); }
     }
 
-    /* +1 提示動畫 */
     .bonus-text {
       position: absolute;
       top: 30%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 24px;
+      font-size: 8vw;
       font-weight: bold;
-      color: #ffddff;
-      text-shadow: 0 0 10px #fff;
+      color: #ff66cc;
+      text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
       opacity: 1;
-      animation: popUp 0.6s ease-out forwards;
+      animation: popUp 0.6s ease-out forwards, pulse 1s infinite;
       z-index: 100;
       pointer-events: none;
     }
@@ -107,25 +124,47 @@
       }
     }
 
-    #score, #time {
-      font-size: 1.2em;
-      margin: 10px;
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 1.5;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
-    #startBtn {
-      background-color: #ff66cc;
-      color: #000;
-      padding: 10px 25px;
-      border: none;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 10px #ff66cc;
-      margin-top: 20px;
+    @media (min-width: 1200px) {
+      h1 { font-size: 4vw; }
+      #score, #time, #startBtn { font-size: 2vw; }
+      .bonus-text { font-size: 2vw; }
     }
 
-    #startBtn:hover {
-      background-color: #ff99dd;
+    @media (max-width: 768px) {
+      h1 { font-size: 8vw; }
+      #score, #time, #startBtn { font-size: 5vw; }
+      .bonus-text { font-size: 6vw; }
+      #game {
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 4vw;
+        max-width: 90vw;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 10vw; }
+      #score, #time, #startBtn { font-size: 6vw; }
+      .bonus-text { font-size: 7vw; }
+      #game {
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 5vw;
+        max-width: 90vw;
+      }
     }
   </style>
 </head>
@@ -169,32 +208,36 @@
       const usagi = hole.querySelector('.usagi');
       usagi.classList.add('show');
 
-      // 支援手機點擊整個洞
-      hole.onclick = () => {
-        if (usagi.classList.contains('show')) {
-          score++;
-          scoreDisplay.textContent = `分數：${score}`;
-          usagi.classList.remove('show');
+      const hitHandler = () => {
+        if (!usagi.classList.contains('show')) return;
+        score++;
+        scoreDisplay.textContent = `分數：${score}`;
+        usagi.classList.remove('show');
 
-          // 光圈特效
-          const effect = document.createElement('div');
-          effect.classList.add('hit-effect');
-          hole.appendChild(effect);
-          setTimeout(() => effect.remove(), 400);
+        // 光圈效果
+        const effect = document.createElement('div');
+        effect.classList.add('hit-effect');
+        hole.appendChild(effect);
+        setTimeout(() => effect.remove(), 400);
 
-          // +1 提示特效
-          const bonus = document.createElement('div');
-          bonus.classList.add('bonus-text');
-          bonus.textContent = '+1！';
-          hole.appendChild(bonus);
-          setTimeout(() => bonus.remove(), 600);
-        }
+        // +1 效果
+        const bonus = document.createElement('div');
+        bonus.classList.add('bonus-text');
+        bonus.textContent = '+1！';
+        hole.appendChild(bonus);
+        setTimeout(() => bonus.remove(), 600);
       };
 
-      // 自動消失
+      // 移除舊事件，避免多次綁定
+      usagi.replaceWith(usagi.cloneNode(true));
+      const newUsagi = hole.querySelector('.usagi');
+      newUsagi.classList.add('show');
+      newUsagi.addEventListener('click', hitHandler);
+      newUsagi.addEventListener('touchstart', hitHandler);
+
       setTimeout(() => {
-        usagi.classList.remove('show');
-      }, 800);
+        newUsagi.classList.remove('show');
+      }, 1000);
     }
 
     function startGame() {
@@ -202,6 +245,9 @@
       timeLeft = 30;
       scoreDisplay.textContent = "分數：0";
       timeDisplay.textContent = "時間：30 秒";
+
+      clearInterval(gameInterval);
+      clearInterval(countdownInterval);
 
       gameInterval = setInterval(showUsagi, 1000);
       countdownInterval = setInterval(() => {
