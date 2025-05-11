@@ -2,116 +2,158 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>股票查詢網站</title>
+  <title>投資人投報率報表</title>
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
     }
-    .container {
+    h1 {
       text-align: center;
-      background: #333;
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-      max-width: 500px;
-      width: 100%;
-    }
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      width: 60%;
-      border: 1px solid #555;
-      border-radius: 5px;
-      background: #222;
-      color: #fff;
-      transition: all 0.3s;
-    }
-    input[type="text"]:focus {
-      border-color: #00bcd4;
-      outline: none;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #00bcd4;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: all 0.3s;
-    }
-    button:hover {
-      background: #0097a7;
-    }
-    .result {
-      margin-top: 30px;
-      font-size: 24px;
       color: #00bcd4;
-      transition: opacity 0.3s ease;
     }
-    .loading {
-      color: #aaa;
-      font-size: 18px;
+    table.dataTable {
+      width: 100% !important;
+      border-collapse: collapse;
+    }
+    table.dataTable thead {
+      background-color: #1f1f1f;
+    }
+    table.dataTable thead th {
+      color: #00bcd4;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background-color: #1e1e1e;
+    }
+    table.dataTable tbody tr:nth-child(odd) {
+      background-color: #2c2c2c;
+    }
+    table.dataTable tbody td {
+      color: #ffffff;
+    }
+    .positive {
+      color: #4caf50;
+    }
+    .negative {
+      color: #f44336;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>股票查詢系統</h1>
-    <p>輸入股票代號查詢價格</p>
-    <input type="text" id="stockSymbol" placeholder="例如：2330" />
-    <button onclick="fetchStockPrice()">查詢</button>
-    <p class="loading" id="loading" style="display: none;">查詢中...</p>
-    <p class="result" id="result"></p>
-  </div>
+  <h1>投資人投報率報表</h1>
+  <table id="roiTable" class="display">
+    <thead>
+      <tr>
+        <th>投資人</th>
+        <th>投報率 (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 資料將由 JavaScript 動態插入 -->
+    </tbody>
+  </table>
 
+  <!-- jQuery 和 DataTables JS -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
-    async function fetchStockPrice() {
-      const stockSymbol = document.getElementById('stockSymbol').value.trim().toUpperCase();
-      const resultElement = document.getElementById('result');
-      const loadingElement = document.getElementById('loading');
-      
-      if (!stockSymbol) {
-        resultElement.textContent = '請輸入股票代號';
-        return;
-      }
-      
-      loadingElement.style.display = 'block';
-      resultElement.style.opacity = 0;
-      
-      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
+    // 投資人報表 CSV URL
+    const investorCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=856920333&single=true&output=csv';
+    // 價格報表 CSV URL
+    const priceCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
+
+    // 讀取 CSV 並解析為陣列
+    async function fetchCSV(url) {
       const response = await fetch(url);
-      const data = await response.text();
-      const rows = data.split('\n');
-      let stockPrice = null;
-
-      for (let row of rows) {
-        const columns = row.split(',');
-        if (columns[0].trim().toUpperCase() === stockSymbol) {
-          stockPrice = columns[1];
-          break;
-        }
-      }
-
-      loadingElement.style.display = 'none';
-
-      if (stockPrice) {
-        resultElement.textContent = `股票代號 ${stockSymbol} 的價格是：${stockPrice} 元`;
-      } else {
-        resultElement.textContent = `未找到股票代號 ${stockSymbol}`;
-      }
-
-      resultElement.style.opacity = 1;
+      const text = await response.text();
+      const rows = text.trim().split('\n').map(row => row.split(','));
+      return rows;
     }
+
+    // 主函式
+    async function main() {
+      const investorData = await fetchCSV(investorCSV);
+      const priceData = await fetchCSV(priceCSV);
+
+      // 建立股票價格映射表
+      const priceMap = {};
+      for (let i = 1; i < priceData.length; i++) {
+        const [stock, price_init, price] = priceData[i];
+        priceMap[stock.trim().toUpperCase()] = {
+          init: parseFloat(price_init),
+          current: parseFloat(price)
+        };
+      }
+
+      const roiResults = [];
+
+      // 處理每位投資人
+      for (let i = 1; i < investorData.length; i++) {
+        const [investor, portfolioStr] = investorData[i];
+        const portfolioLines = portfolioStr.replace(/"/g, '').split('\n');
+        let totalInit = 0;
+        let totalCurrent = 0;
+
+        for (const line of portfolioLines) {
+          const match = line.trim().match(/^(\d+)%\s+(.+)$/);
+          if (match) {
+            const percent = parseFloat(match[1]);
+            const stock = match[2].trim().toUpperCase();
+            const priceInfo = priceMap[stock];
+            if (priceInfo) {
+              totalInit += percent * priceInfo.init;
+              totalCurrent += percent * priceInfo.current;
+            } else {
+              console.warn(`找不到股票代碼：${stock}`);
+            }
+          }
+        }
+
+        const roi = ((totalCurrent - totalInit) / totalInit) * 100;
+        roiResults.push({
+          investor: investor.trim(),
+          roi: roi.toFixed(2)
+        });
+      }
+
+      // 將結果插入表格
+      const tbody = document.querySelector('#roiTable tbody');
+      for (const result of roiResults) {
+        const tr = document.createElement('tr');
+        const tdInvestor = document.createElement('td');
+        tdInvestor.textContent = result.investor;
+        const tdROI = document.createElement('td');
+        tdROI.textContent = result.roi;
+        tdROI.classList.add(parseFloat(result.roi) >= 0 ? 'positive' : 'negative');
+        tr.appendChild(tdInvestor);
+        tr.appendChild(tdROI);
+        tbody.appendChild(tr);
+      }
+
+      // 初始化 DataTable
+      $('#roiTable').DataTable({
+        order: [[1, 'desc']],
+        language: {
+          search: "搜尋：",
+          lengthMenu: "顯示 _MENU_ 筆資料",
+          info: "顯示第 _START_ 至 _END_ 筆，共 _TOTAL_ 筆資料",
+          paginate: {
+            first: "第一頁",
+            last: "最後一頁",
+            next: "下一頁",
+            previous: "上一頁"
+          },
+          zeroRecords: "沒有符合的資料",
+        }
+      });
+    }
+
+    // 執行主函式
+    main();
   </script>
 </body>
 </html>
