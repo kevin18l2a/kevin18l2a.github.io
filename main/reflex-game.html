@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>反應力挑戰遊戲</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #0f0f0f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #00fff7;
+      text-align: center;
+    }
+
+    h1 {
+      text-shadow: 0 0 15px #00fff7;
+    }
+
+    #gameArea {
+      margin-top: 30px;
+      width: 80%;
+      max-width: 500px;
+      height: 300px;
+      background-color: #1a1a2e;
+      border: 3px solid #00fff7;
+      border-radius: 15px;
+      box-shadow: 0 0 20px #00fff7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #status {
+      font-size: 1.2em;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 1em;
+      border: none;
+      border-radius: 25px;
+      background: #00fff7;
+      color: #000;
+      font-weight: bold;
+      box-shadow: 0 0 10px #00fff7;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ 反應力挑戰 ⚡</h1>
+  <p>點擊「開始」，然後等畫面變色，再點擊遊戲區塊！</p>
+  <button onclick="startGame()">開始</button>
+
+  <div id="gameArea" onclick="clickArea()">
+    <div id="status">準備好了嗎？</div>
+  </div>
+
+  <script>
+    let startTime;
+    let timeoutID;
+    let ready = false;
+    let waiting = false;
+
+    function startGame() {
+      document.getElementById("status").innerText = "等待中... 請勿點擊";
+      document.getElementById("gameArea").style.backgroundColor = "#1a1a2e";
+      ready = false;
+      waiting = true;
+
+      const randomTime = Math.random() * 3000 + 2000; // 2~5秒之間
+      timeoutID = setTimeout(() => {
+        document.getElementById("gameArea").style.backgroundColor = "#00ff88";
+        document.getElementById("status").innerText = "快點點擊！";
+        startTime = new Date().getTime();
+        ready = true;
+        waiting = false;
+      }, randomTime);
+    }
+
+    function clickArea() {
+      if (waiting) {
+        clearTimeout(timeoutID);
+        document.getElementById("status").innerText = "太快了！還沒開始呢 😅";
+        return;
+      }
+
+      if (!ready) return;
+
+      const reactionTime = new Date().getTime() - startTime;
+      document.getElementById("status").innerText = `你的反應時間是：${reactionTime} 毫秒！`;
+      document.getElementById("gameArea").style.backgroundColor = "#1a1a2e";
+      ready = false;
+    }
+  </script>
+
+</body>
+</html>
