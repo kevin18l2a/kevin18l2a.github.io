@@ -10,6 +10,29 @@
       color: #f8fafc;
       padding: 20px;
     }
+
+    /* Tab樣式 */
+    #tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #38bdf8;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      background-color: #334155;
+      margin-right: 10px;
+      border-radius: 8px 8px 0 0;
+      color: #f8fafc;
+    }
+
+    .tab.active {
+      background-color: #38bdf8;
+      color: #000;
+    }
+
+    /* 表格樣式 */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -41,32 +64,18 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
-    #tabs {
-      margin-bottom: 20px;
-    }
-    .tab {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #334155;
-      color: #f8fafc;
-      margin-right: 5px;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    .tab.active {
-      background-color: #38bdf8;
-    }
   </style>
 </head>
 <body>
   <h1>📈 投資人投報率報表</h1>
-  
+
+  <!-- Tab 按鈕 -->
   <div id="tabs">
     <div class="tab active" onclick="switchTab('investor')">各投資人明細</div>
     <div class="tab" onclick="switchTab('stock')">各股績效排名</div>
-    <div class="tab" onclick="switchTab('investor-performance')">各投資人績效排名</div>
+    <div class="tab" onclick="switchTab('performance')">投資人績效排名</div>
   </div>
-  
+
   <div id="report">載入中...</div>
 
   <script>
@@ -133,7 +142,7 @@
       return data;
     }
 
-    // 產生報表 - 各投資人明細
+    // 產生各投資人明細報表
     function generateInvestorReport(priceData) {
       const container = document.getElementById("report");
       container.innerHTML = '';
@@ -198,17 +207,18 @@
       }
     }
 
-    // 產生報表 - 各股績效排名
+    // 產生各股績效排名報表
     function generateStockRanking(priceData) {
       const container = document.getElementById("report");
       container.innerHTML = '';
+      
+      const stockPerformance = Object.keys(priceData).map(stock => {
+        const priceInfo = priceData[stock];
+        const roi = ((priceInfo.current - priceInfo.init) / priceInfo.init) * 100;
+        return { stock, roi };
+      });
 
-      const stockList = Object.keys(priceData).map(stock => ({
-        stock,
-        roi: ((priceData[stock].current - priceData[stock].init) / priceData[stock].init) * 100
-      }));
-
-      stockList.sort((a, b) => b.roi - a.roi);
+      stockPerformance.sort((a, b) => b.roi - a.roi);
 
       let tableHTML = `
         <h2>各股績效排名</h2>
@@ -224,13 +234,14 @@
           <tbody>
       `;
 
-      stockList.forEach(item => {
+      stockPerformance.forEach(item => {
+        const priceInfo = priceData[item.stock];
         const roiClass = item.roi >= 0 ? 'positive' : 'negative';
         tableHTML += `
           <tr>
             <td>${item.stock}</td>
-            <td>${priceData[item.stock].init.toFixed(2)}</td>
-            <td>${priceData[item.stock].current.toFixed(2)}</td>
+            <td>${priceInfo.init.toFixed(2)}</td>
+            <td>${priceInfo.current.toFixed(2)}</td>
             <td class="${roiClass}">${item.roi.toFixed(2)}%</td>
           </tr>
         `;
@@ -240,27 +251,31 @@
         </tbody>
       </table>
       `;
+
       container.innerHTML = tableHTML;
     }
 
-    // 產生報表 - 各投資人績效排名
+    // 產生投資人績效排名報表
     function generateInvestorPerformanceRanking() {
       const container = document.getElementById("report");
       container.innerHTML = '';
+      
+      const investorPerformance = [];
 
-      const investorPerformance = Object.entries(investorData).map(([name, portfolio]) => {
+      for (const [name, portfolio] of Object.entries(investorData)) {
         let totalROI = 0;
 
         portfolio.forEach(item => {
-          const priceInfo = priceData[item.stock];
+          const stock = item.stock;
+          const priceInfo = priceData[stock];
           if (priceInfo) {
             const roi = ((priceInfo.current - priceInfo.init) / priceInfo.init) * 100;
             totalROI += roi * (item.percent / 100);
           }
         });
 
-        return { name, totalROI };
-      });
+        investorPerformance.push({ name, totalROI });
+      }
 
       investorPerformance.sort((a, b) => b.totalROI - a.totalROI);
 
@@ -290,31 +305,34 @@
         </tbody>
       </table>
       `;
+
       container.innerHTML = tableHTML;
     }
 
-    // 切換 tab
+    // 切換tab顯示不同的報表
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(tabElement => {
         tabElement.classList.remove('active');
       });
-      document.querySelector(`#tabs .tab:nth-child(${tab === 'investor' ? 1 : tab === 'stock' ? 2 : 3})`).classList.add('active');
-      
+
       if (tab === 'investor') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
         generateInvestorReport(priceData);
       } else if (tab === 'stock') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
         generateStockRanking(priceData);
-      } else {
+      } else if (tab === 'performance') {
+        document.querySelector('.tab:nth-child(3)').classList.add('active');
         generateInvestorPerformanceRanking();
       }
     }
 
-    // 主程式
+    // 讀取Google Sheets資料
     fetch(priceDataUrl)
       .then(response => response.text())
       .then(csvText => {
         const priceData = parseCSV(csvText);
-        generateInvestorReport(priceData);  // 初始顯示各投資人明細報表
+        generateInvestorReport(priceData); // 默認顯示各投資人明細報表
       })
       .catch(error => {
         document.getElementById("report").innerText = '載入資料時發生錯誤：' + error;
