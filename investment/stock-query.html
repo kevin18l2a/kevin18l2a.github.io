@@ -15,23 +15,17 @@
       margin-bottom: 20px;
     }
     .tab {
-      padding: 10px 20px;
-      background-color: #334155;
       margin-right: 10px;
+      padding: 10px 20px;
+      background: #1e293b;
+      color: #38bdf8;
       border-radius: 8px;
       cursor: pointer;
-      color: #f8fafc;
     }
     .tab.active {
-      background-color: #38bdf8;
+      background: #38bdf8;
       color: #0f172a;
       font-weight: bold;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
     }
     table {
       width: 100%;
@@ -69,18 +63,14 @@
 <body>
   <h1>📈 投資人投報率報表</h1>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('investors')">各投資人明細</div>
-    <div class="tab" onclick="switchTab('stocks')">各股績效排名</div>
-    <div class="tab" onclick="switchTab('ranking')">投資人績效排名</div>
+    <div class="tab active" onclick="switchTab('investor')">各投資人明細</div>
+    <div class="tab" onclick="switchTab('stock')">個股績效排名</div>
+    <div class="tab" onclick="switchTab('ranking')">投資人總績效排名</div>
   </div>
 
-  <div id="investors" class="tab-content active"></div>
-  <div id="stocks" class="tab-content"></div>
-  <div id="ranking" class="tab-content"></div>
+  <div id="content"></div>
 
   <script>
-    let priceData = {};
-
     const investorData = {
       "豪": [
         { percent: 30, stock: "PLTR" },
@@ -127,92 +117,131 @@
 
     const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
+    let priceData = {};
+
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
       const data = {};
       for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',');
-        const stock = row[0].trim();
-        const price_init = parseFloat(row[1]);
-        const price_current = parseFloat(row[2]);
-        data[stock] = { init: price_init, current: price_current };
+        const [stock, initStr, currentStr] = lines[i].split(',');
+        data[stock.trim()] = {
+          init: parseFloat(initStr),
+          current: parseFloat(currentStr)
+        };
       }
       return data;
     }
 
-    function generateInvestorReport() {
-      const container = document.getElementById("investors");
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (tab === 'investor') renderInvestorDetail();
+      if (tab === 'stock') renderStockRanking();
+      if (tab === 'ranking') renderInvestorRanking();
+    }
+
+    function renderInvestorDetail() {
+      const container = document.getElementById("content");
       container.innerHTML = '';
-      const results = [];
 
       for (const [name, portfolio] of Object.entries(investorData)) {
         let totalROI = 0;
-        let html = `<h2>${name}</h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+        let html = `<h2>${name}</h2><table><thead><tr>
+            <th>股票代號</th><th>初始價格</th><th>目前價格</th>
+            <th>投資比例 (%)</th><th>報酬率 (%)</th>
+          </tr></thead><tbody>`;
 
-        for (const { stock, percent } of portfolio) {
-          const p = priceData[stock];
+        for (const item of portfolio) {
+          const p = priceData[item.stock];
           if (p) {
             const roi = ((p.current - p.init) / p.init) * 100;
-            totalROI += roi * (percent / 100);
-            html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
-          } else {
-            html += `<tr><td>${stock}</td><td colspan="4">無價格資料</td></tr>`;
+            totalROI += roi * (item.percent / 100);
+            const roiClass = roi >= 0 ? 'positive' : 'negative';
+            html += `<tr>
+              <td>${item.stock}</td>
+              <td>${p.init.toFixed(2)}</td>
+              <td>${p.current.toFixed(2)}</td>
+              <td>${item.percent}</td>
+              <td class="${roiClass}">${roi.toFixed(2)}%</td>
+            </tr>`;
           }
         }
 
-        html += `</tbody><tfoot><tr><td colspan="4"><strong>總報酬率</strong></td><td class="${totalROI >= 0 ? 'positive' : 'negative'}"><strong>${totalROI.toFixed(2)}%</strong></td></tr></tfoot></table>`;
+        const roiClass = totalROI >= 0 ? 'positive' : 'negative';
+        html += `</tbody><tfoot><tr>
+            <td colspan="4"><strong>總報酬率</strong></td>
+            <td class="${roiClass}"><strong>${totalROI.toFixed(2)}%</strong></td>
+          </tr></tfoot></table>`;
+
         container.innerHTML += html;
-        results.push({ name, roi: totalROI });
       }
-
-      // 存到 ranking tab
-      generateInvestorRanking(results);
     }
 
-    function generateStockPerformance() {
-      const stockReturns = {};
+    function renderStockRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = `<h2>📊 個股績效排名</h2>`;
+      const stocks = Object.entries(priceData).map(([stock, data]) => {
+        const roi = ((data.current - data.init) / data.init) * 100;
+        return { stock, roi, init: data.init, current: data.current };
+      });
 
-      for (const stock in priceData) {
-        const p = priceData[stock];
-        if (p.init > 0) {
-          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
+      stocks.sort((a, b) => b.roi - a.roi);
+
+      let html = `<table><thead>
+        <tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>報酬率 (%)</th></tr>
+      </thead><tbody>`;
+      for (const s of stocks) {
+        const roiClass = s.roi >= 0 ? 'positive' : 'negative';
+        html += `<tr>
+          <td>${s.stock}</td>
+          <td>${s.init.toFixed(2)}</td>
+          <td>${s.current.toFixed(2)}</td>
+          <td class="${roiClass}">${s.roi.toFixed(2)}%</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML += html;
+    }
+
+    function renderInvestorRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = `<h2>🏆 投資人總報酬率排名</h2>`;
+      const ranking = [];
+
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        for (const item of portfolio) {
+          const p = priceData[item.stock];
+          if (p) {
+            const roi = ((p.current - p.init) / p.init) * 100;
+            totalROI += roi * (item.percent / 100);
+          }
         }
+        ranking.push({ name, roi: totalROI });
       }
 
-      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
-      const container = document.getElementById("stocks");
-      container.innerHTML = `<h2>各股績效排名</h2><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(([stock, roi]) => `<tr><td>${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
-    }
+      ranking.sort((a, b) => b.roi - a.roi);
 
-    function generateInvestorRanking(rankingData) {
-      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
-      const container = document.getElementById("ranking");
-      container.innerHTML = `<h2>投資人總報酬率排名</h2><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(({ name, roi }) => `<tr><td>${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
-    }
-
-    function switchTab(id) {
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelector(`.tab[onclick*='${id}']`).classList.add('active');
-      document.getElementById(id).classList.add('active');
-
-      if (id === 'stocks') generateStockPerformance();
-      if (id === 'ranking') generateInvestorRanking();
+      let html = `<table><thead>
+        <tr><th>投資人</th><th>總報酬率 (%)</th></tr>
+      </thead><tbody>`;
+      for (const r of ranking) {
+        const roiClass = r.roi >= 0 ? 'positive' : 'negative';
+        html += `<tr>
+          <td>${r.name}</td>
+          <td class="${roiClass}">${r.roi.toFixed(2)}%</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML += html;
     }
 
     fetch(priceDataUrl)
-      .then(response => response.text())
-      .then(csvText => {
-        priceData = parseCSV(csvText);
-        generateInvestorReport();
-      })
-      .catch(error => {
-        document.getElementById("investors").innerText = '載入資料時發生錯誤：' + error;
-        console.error('Error fetching price data:', error);
+      .then(res => res.text())
+      .then(csv => {
+        priceData = parseCSV(csv);
+        renderInvestorDetail(); // 預設載入第一個 tab
       });
   </script>
 </body>
