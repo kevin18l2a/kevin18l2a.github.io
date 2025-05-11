@@ -2,110 +2,62 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>台積電股價趨勢圖</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>台積電即時股價</title>
   <style>
     body {
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background: linear-gradient(120deg, #0f2027, #203a43, #2c5364);
       color: #fff;
-      font-family: "Segoe UI", sans-serif;
-      padding: 2em;
-      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
+
     h1 {
-      font-size: 2.5em;
-      color: #ffca28;
+      font-size: 3rem;
+      color: #ffeb3b;
+      text-shadow: 2px 2px 8px #000;
     }
-    canvas {
-      max-width: 100%;
-      height: auto;
-      margin-top: 40px;
+
+    .price {
+      font-size: 5rem;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #00e5ff;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(1.05); opacity: 0.8; }
     }
   </style>
 </head>
 <body>
-  <h1>台積電股價趨勢圖</h1>
-  <canvas id="stockChart"></canvas>
+  <h1>台積電即時股價</h1>
+  <div class="price" id="price">讀取中...</div>
 
   <script>
-    async function fetchCSVData() {
-      const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv');
-      const data = await response.text();
-      return data;
-    }
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
 
-    function parseCSV(csv) {
-      const lines = csv.trim().split('\n');
-      const headers = lines[0].split(',');
-      const dateIndex = headers.findIndex(h => h.toLowerCase().includes('date') || h.toLowerCase().includes('日期'));
-      const priceIndex = headers.findIndex(h => h.toLowerCase().includes('price') || h.toLowerCase().includes('收盤價') || h.toLowerCase().includes('價格'));
-
-      const dates = [];
-      const prices = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',');
-        const date = cols[dateIndex];
-        const price = parseFloat(cols[priceIndex]);
-        if (date && !isNaN(price)) {
-          dates.push(date);
-          prices.push(price);
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(csv => {
+        const lines = csv.trim().split('\n');
+        if (lines.length >= 2) {
+          const value = lines[1].split(',')[1];
+          document.getElementById('price').textContent = `NT$ ${parseFloat(value).toFixed(2)}`;
+        } else {
+          document.getElementById('price').textContent = '無資料';
         }
-      }
-
-      return { dates, prices };
-    }
-
-    async function renderChart() {
-      const csvData = await fetchCSVData();
-      const { dates, prices } = parseCSV(csvData);
-
-      const ctx = document.getElementById('stockChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: '台積電收盤價 (TWD)',
-            data: prices,
-            borderColor: '#ffca28',
-            backgroundColor: 'rgba(255, 202, 40, 0.2)',
-            borderWidth: 2,
-            pointRadius: 3,
-            pointBackgroundColor: '#fff',
-            tension: 0.2
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              ticks: {
-                color: '#fff'
-              }
-            },
-            y: {
-              ticks: {
-                color: '#fff'
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              labels: {
-                color: '#fff'
-              }
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          }
-        }
+      })
+      .catch(err => {
+        document.getElementById('price').textContent = '讀取錯誤';
+        console.error('讀取失敗:', err);
       });
-    }
-
-    renderChart();
   </script>
 </body>
 </html>
