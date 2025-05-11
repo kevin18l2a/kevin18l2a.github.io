@@ -1,101 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>即時股價展示</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 2rem;
-      text-shadow: 2px 2px 8px #000;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 8px 25px rgba(255,255,255,0.3);
-    }
-
-    .stock {
-      font-size: 1.8rem;
-      font-weight: bold;
-      color: #00e5ff;
-    }
-
-    .price {
-      font-size: 2.2rem;
-      margin-top: 0.5rem;
-      color: #ffeb3b;
-    }
-
-    .error {
-      color: #ff4444;
-      font-size: 1.2rem;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>股價資料 Debug</title>
 </head>
 <body>
-  <h1>🔥 即時股價展示 🔥</h1>
-  <div id="stockGrid" class="grid">載入中...</div>
+  <h1>Console 中查看資料</h1>
+  <p>請打開瀏覽器的「開發者工具 Console」查看完整 CSV 資料</p>
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
 
     fetch(csvUrl)
       .then(res => res.text())
-      .then(csv => {
-        const lines = csv.trim().split('\n');
+      .then(csvText => {
+        console.log("✅ 取得的原始 CSV 文字：\n", csvText);
+        
+        const lines = csvText.trim().split('\n');
+        console.log("✅ 每一行內容如下：");
+        lines.forEach((line, index) => {
+          console.log(`第 ${index + 1} 行:`, line);
+        });
+
         const headers = lines[0].split(',');
-        const stockIndex = headers.indexOf('stock');
-        const priceIndex = headers.indexOf('price');
-        const container = document.getElementById('stockGrid');
-        container.innerHTML = '';
+        console.log("✅ 標題欄位：", headers);
 
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
-
-          if (!cols[stockIndex] || !cols[priceIndex]) continue;
-
-          const stock = cols[stockIndex].trim();
-          const price = cols[priceIndex].trim();
-
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <div class="stock">${stock}</div>
-            <div class="price">$${parseFloat(price).toFixed(2)}</div>
-          `;
-          container.appendChild(card);
+          console.log(`📌 第 ${i + 1} 行資料：`, cols);
         }
       })
       .catch(err => {
-        document.getElementById('stockGrid').innerHTML = '<div class="error">❌ 資料載入失敗，請稍後再試。</div>';
-        console.error(err);
+        console.error("❌ 發生錯誤：", err);
       });
   </script>
 </body>
