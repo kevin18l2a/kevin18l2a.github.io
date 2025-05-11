@@ -1,73 +1,192 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>CSV 資料讀取與結構建立</title>
+  <meta charset="UTF-8" />
+  <title>投資人投報率報表</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      background-color: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+    }
+    th {
+      background-color: #334155;
+      color: #38bdf8;
+    }
+    tr:nth-child(even) td {
+      background-color: #273549;
+    }
+    .positive {
+      color: #4ade80;
+    }
+    .negative {
+      color: #f87171;
+    }
+    h2 {
+      border-bottom: 1px solid #38bdf8;
+      padding-bottom: 5px;
+      margin-top: 40px;
+    }
+  </style>
 </head>
 <body>
-  <h1>開發者請打開 Console 看資料結構！</h1>
+  <h1>📈 投資人投報率報表</h1>
+  <div id="report">載入中...</div>
 
   <script>
-    // Google Sheets CSV 連結
-    const investorCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=856920333&single=true&output=csv';
-    const priceCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
+    // 投資人資料
+    const investorData = {
+      "豪": [
+        { percent: 30, stock: "PLTR" },
+        { percent: 30, stock: "VITL" },
+        { percent: 30, stock: "NVDA" },
+        { percent: 10, stock: "SRFM" }
+      ],
+      "斌": [
+        { percent: 50, stock: "PLTR" },
+        { percent: 20, stock: "TSLA" },
+        { percent: 20, stock: "NVDA" },
+        { percent: 10, stock: "TSM" }
+      ],
+      "嘉琦": [
+        { percent: 20, stock: "PLTR" },
+        { percent: 15, stock: "TSLA" },
+        { percent: 15, stock: "TSM" },
+        { percent: 10, stock: "NFLX" },
+        { percent: 10, stock: "META" },
+        { percent: 10, stock: "NVDA" },
+        { percent: 10, stock: "SOFI" },
+        { percent: 10, stock: "BTC" }
+      ],
+      "老歐": [
+        { percent: 10, stock: "AAPL" },
+        { percent: 5, stock: "BB" },
+        { percent: 5, stock: "NVDA" },
+        { percent: 5, stock: "PLTR" },
+        { percent: 15, stock: "SOUN" },
+        { percent: 20, stock: "TSLA" },
+        { percent: 5, stock: "VITL" },
+        { percent: 20, stock: "VOO" },
+        { percent: 15, stock: "QQQ" }
+      ],
+      "草": [
+        { percent: 30, stock: "2330" },
+        { percent: 20, stock: "NVDA" },
+        { percent: 10, stock: "2618" },
+        { percent: 15, stock: "PLTR" },
+        { percent: 10, stock: "TSLA" },
+        { percent: 15, stock: "AAPL" }
+      ]
+    };
 
-    // 股票價格資料: { 2330: { init: xxx, current: xxx }, ... }
-    const priceData = {};
+    // 從 Google Sheets 讀取股票價格資料
+    const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
-    // 投資人資料: { 豪: [{ percent: 30, stock: "PLTR" }, ...], ... }
-    const investorData = {};
-
-    async function fetchCSV(url) {
-      const response = await fetch(url);
-      const text = await response.text();
-      return text.trim().split('\n').map(row => {
-        // 支援用逗號分隔但包含引號的格式
-        const match = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-        return match ? match.map(v => v.replace(/^"|"$/g, '')) : [];
-      });
+    // 解析 CSV 資料
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',');
+      const data = {};
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        const stock = row[0].trim();
+        const price_init = parseFloat(row[1]);
+        const price_current = parseFloat(row[2]);
+        data[stock] = { init: price_init, current: price_current };
+      }
+      return data;
     }
 
-    async function main() {
-      // 下載 CSV
-      const rawPrice = await fetchCSV(priceCSV);
-      const rawInvestor = await fetchCSV(investorCSV);
+    // 產生報表
+    function generateReport(priceData) {
+      const container = document.getElementById("report");
+      container.innerHTML = '';
 
-      // 1. 解析 price CSV
-      for (let i = 1; i < rawPrice.length; i++) {
-        const [stock, priceInit, priceCurrent] = rawPrice[i];
-        if (!stock || !priceInit || !priceCurrent) continue;
-        const symbol = stock.trim().toUpperCase();
-        priceData[symbol] = {
-          init: parseFloat(priceInit),
-          current: parseFloat(priceCurrent)
-        };
-      }
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        let tableHTML = `
+          <h2>${name}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>股票代號</th>
+                <th>初始價格</th>
+                <th>目前價格</th>
+                <th>投資比例 (%)</th>
+                <th>報酬率 (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
 
-      // 2. 解析 investor CSV
-      for (let i = 1; i < rawInvestor.length; i++) {
-        const [name, rawHoldings] = rawInvestor[i];
-        if (!name || !rawHoldings) continue;
-
-        const lines = rawHoldings.split('\n');
-        investorData[name.trim()] = [];
-
-        for (const line of lines) {
-          const match = line.trim().match(/^(\d+)%\s+(.+)$/);
-          if (match) {
-            const percent = parseFloat(match[1]);
-            const stock = match[2].trim().toUpperCase();
-            investorData[name.trim()].push({ percent, stock });
+        portfolio.forEach(item => {
+          const stock = item.stock;
+          const percent = item.percent;
+          const priceInfo = priceData[stock];
+          if (priceInfo) {
+            const roi = ((priceInfo.current - priceInfo.init) / priceInfo.init) * 100;
+            totalROI += roi * (percent / 100);
+            const roiClass = roi >= 0 ? 'positive' : 'negative';
+            tableHTML += `
+              <tr>
+                <td>${stock}</td>
+                <td>${priceInfo.init.toFixed(2)}</td>
+                <td>${priceInfo.current.toFixed(2)}</td>
+                <td>${percent}</td>
+                <td class="${roiClass}">${roi.toFixed(2)}%</td>
+              </tr>
+            `;
+          } else {
+            tableHTML += `
+              <tr>
+                <td>${stock}</td>
+                <td colspan="4">無價格資料</td>
+              </tr>
+            `;
           }
-        }
-      }
+        });
 
-      // 3. 印出資料結構
-      console.log('📊 價格資料 (priceData):', priceData);
-      console.log('👤 投資人資料 (investorData):', investorData);
+        const totalROIClass = totalROI >= 0 ? 'positive' : 'negative';
+        tableHTML += `
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4"><strong>總報酬率</strong></td>
+                <td class="${totalROIClass}"><strong>${totalROI.toFixed(2)}%</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+
+        container.innerHTML += tableHTML;
+      }
     }
 
-    main();
+    // 主程式
+    fetch(priceDataUrl)
+      .then(response => response.text())
+      .then(csvText => {
+        const priceData = parseCSV(csvText);
+        generateReport(priceData);
+      })
+      .catch(error => {
+        document.getElementById("report").innerText = '載入資料時發生錯誤：' + error;
+        console.error('Error fetching price data:', error);
+      });
   </script>
 </body>
 </html>
