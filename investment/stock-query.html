@@ -1,41 +1,37 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>股價查詢 - 科技感介面</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>股價查詢</title>
   <style>
     body {
-      margin: 0;
-      padding: 2rem;
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #fff;
+      color: white;
       text-align: center;
+      padding: 2rem;
+      margin: 0;
     }
 
     h1 {
       font-size: 3rem;
       margin-bottom: 2rem;
-      text-shadow: 2px 2px 8px #000;
+      text-shadow: 2px 2px 10px #000;
       color: #00e5ff;
     }
 
-    .search-container {
-      margin: 2rem 0;
-    }
-
     .search-container input {
-      padding: 0.8rem 1rem;
-      font-size: 1.2rem;
+      padding: 1rem;
+      font-size: 1.5rem;
+      width: 50%;
+      max-width: 400px;
       border-radius: 1rem;
       border: none;
       outline: none;
-      width: 60%;
-      max-width: 400px;
+      margin-bottom: 2rem;
       background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      color: white;
       transition: background 0.3s ease;
     }
 
@@ -44,11 +40,9 @@
     }
 
     .stock-container {
-      margin-top: 2rem;
-      font-size: 1.5rem;
       display: flex;
-      justify-content: center;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 2rem;
     }
 
@@ -73,9 +67,9 @@
     }
 
     .price {
-      font-size: 2.2rem;
-      margin-top: 0.5rem;
+      font-size: 2rem;
       color: #ffeb3b;
+      margin-top: 1rem;
     }
 
     .loading {
@@ -90,10 +84,11 @@
   </style>
 </head>
 <body>
+
   <h1>🔥 即時股價查詢 🔥</h1>
 
   <div class="search-container">
-    <input type="text" id="searchInput" placeholder="請輸入股票代號 (如: 2330)" oninput="filterStocks()" />
+    <input type="text" id="searchInput" placeholder="輸入股票代號 (如: 2330)" oninput="filterStocks()">
   </div>
 
   <div id="stockGrid" class="stock-container">
@@ -102,49 +97,45 @@
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
-
     let stocks = [];
 
-    // 讀取 CSV 資料
+    // 讀取 CSV 資料並解析
     fetch(csvUrl)
-      .then(res => res.text())
-      .then(csv => {
-        const lines = csv.trim().split('\n');
-        const headers = lines[0].split(',');
+      .then(response => response.text())
+      .then(csvData => {
+        const rows = csvData.trim().split('\n');
+        const headers = rows[0].split(',');
         const stockIndex = headers.indexOf('stock');
         const priceIndex = headers.indexOf('price');
 
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(',');
-          if (!cols[stockIndex] || !cols[priceIndex]) continue;
-
-          const stock = cols[stockIndex].trim();
-          const price = parseFloat(cols[priceIndex].trim());
-
-          stocks.push({ stock, price });
+        // 解析 CSV 資料
+        for (let i = 1; i < rows.length; i++) {
+          const cols = rows[i].split(',');
+          if (cols[stockIndex] && cols[priceIndex]) {
+            stocks.push({
+              stock: cols[stockIndex].trim(),
+              price: parseFloat(cols[priceIndex].trim())
+            });
+          }
         }
 
-        renderStocks(stocks);  // 顯示所有資料
+        // 在控制台打印解析後的資料結構
+        console.log('解析後的資料結構：', stocks);
+        
+        renderStocks(stocks); // 渲染股價
       })
-      .catch(err => {
-        document.getElementById('stockGrid').innerHTML = '<div class="error">❌ 資料載入失敗，請稍後再試。</div>';
-        console.error(err);
+      .catch(error => {
+        console.error('Error fetching CSV data:', error);
+        document.getElementById('stockGrid').innerHTML = '<div class="error">資料載入失敗，請稍後再試。</div>';
       });
 
-    // 根據搜尋結果過濾顯示股票
-    function filterStocks() {
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-      const filteredStocks = stocks.filter(stock => stock.stock.toLowerCase().includes(searchQuery));
-      renderStocks(filteredStocks);
-    }
-
-    // 顯示股票資料的函數
+    // 顯示資料
     function renderStocks(stocksData) {
       const container = document.getElementById('stockGrid');
-      container.innerHTML = '';  // 清空容器
+      container.innerHTML = ''; // 清空容器
 
       if (stocksData.length === 0) {
-        container.innerHTML = '<div class="error">未找到匹配的股票代號</div>';
+        container.innerHTML = '<div class="error">未找到匹配的股票代號。</div>';
         return;
       }
 
@@ -158,6 +149,14 @@
         container.appendChild(card);
       });
     }
+
+    // 根據輸入過濾顯示的股票
+    function filterStocks() {
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const filteredStocks = stocks.filter(stock => stock.stock.toLowerCase().includes(searchQuery));
+      renderStocks(filteredStocks);
+    }
   </script>
+
 </body>
 </html>
