@@ -2,61 +2,94 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>台積電即時股價</title>
+  <title>股票即時報價</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      background: linear-gradient(120deg, #0f2027, #203a43, #2c5364);
-      color: #fff;
+      margin: 0;
+      padding: 0;
       font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(ellipse at top left, #1e3c72, #2a5298);
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      padding: 2rem;
     }
 
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 2px 2px 5px #000;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .stock {
+      font-size: 1.5rem;
+      font-weight: bold;
       color: #ffeb3b;
-      text-shadow: 2px 2px 8px #000;
     }
 
     .price {
-      font-size: 5rem;
-      margin-top: 1rem;
-      font-weight: bold;
-      color: #00e5ff;
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(1); opacity: 1; }
-      to { transform: scale(1.05); opacity: 0.8; }
+      font-size: 2rem;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 <body>
-  <h1>台積電即時股價</h1>
-  <div class="price" id="price">讀取中...</div>
+  <h1>股票即時報價</h1>
+  <div class="grid" id="stockGrid">載入中...</div>
 
   <script>
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?output=csv';
 
     fetch(csvUrl)
-      .then(response => response.text())
+      .then(res => res.text())
       .then(csv => {
         const lines = csv.trim().split('\n');
-        if (lines.length >= 2) {
-          const value = lines[1].split(',')[1];
-          document.getElementById('price').textContent = `NT$ ${parseFloat(value).toFixed(2)}`;
-        } else {
-          document.getElementById('price').textContent = '無資料';
+        const headers = lines[0].split(',');
+        const stockIndex = headers.indexOf('stock');
+        const priceIndex = headers.indexOf('price');
+        const container = document.getElementById('stockGrid');
+        container.innerHTML = ''; // 清空
+
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          const stock = cols[stockIndex].trim();
+          const price = cols[priceIndex].trim();
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="stock">${stock}</div>
+            <div class="price">NT$ ${parseFloat(price).toFixed(2)}</div>
+          `;
+          container.appendChild(card);
         }
       })
       .catch(err => {
-        document.getElementById('price').textContent = '讀取錯誤';
-        console.error('讀取失敗:', err);
+        document.getElementById('stockGrid').innerHTML = '載入錯誤，請稍後再試。';
+        console.error(err);
       });
   </script>
 </body>
