@@ -1,41 +1,22 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <title>打烏薩奇！</title>
-  <style>
-    body {
-      background-color: #111;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      text-align: center;
-      padding: 20px;
+<style>
+    .hit-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 80%);
+      border-radius: 50%;
+      animation: boom 0.3s ease-out;
+      pointer-events: none;
+      z-index: 2;
     }
-
-    h1 {
-      color: #ff66cc;
-      text-shadow: 0 0 10px #ff66cc;
+  
+    @keyframes boom {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
     }
-
-    #game {
-      display: grid;
-      grid-template-columns: repeat(3, 100px);
-      grid-gap: 15px;
-      justify-content: center;
-      margin: 30px auto;
-    }
-
-    .hole {
-      width: 100px;
-      height: 100px;
-      background-color: #333;
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 10px #444;
-      cursor: pointer;
-    }
-
+  
     .usagi {
       width: 100%;
       height: 100%;
@@ -44,93 +25,62 @@
       position: absolute;
       top: 0;
       left: 0;
+      z-index: 1;
+      transition: transform 0.1s;
     }
-
+  
     .show {
       display: block;
     }
-
-    #score, #time {
-      font-size: 1.2em;
-      margin: 10px;
-    }
-
-    #startBtn {
-      background-color: #ff66cc;
-      color: #000;
-      padding: 10px 25px;
-      border: none;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 10px #ff66cc;
-      margin-top: 20px;
-    }
-
-    #startBtn:hover {
-      background-color: #ff99dd;
-    }
   </style>
-</head>
-<body>
-
-  <h1>🐰 打烏薩奇！</h1>
-  <div id="score">分數：0</div>
-  <div id="time">時間：30 秒</div>
-  <button id="startBtn" onclick="startGame()">開始遊戲</button>
-
-  <div id="game">
-    <!-- 9個洞 -->
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-    <div class="hole"><img class="usagi" src="https://kevin18l2a.github.io/src/images/rabbit_get_lemon.jpg"></div>
-  </div>
-
+  
   <script>
     let score = 0;
     let timeLeft = 30;
     let gameInterval;
     let countdownInterval;
-
+  
     const holes = document.querySelectorAll('.hole');
     const scoreDisplay = document.getElementById('score');
     const timeDisplay = document.getElementById('time');
-
+  
     function randomHole() {
       const index = Math.floor(Math.random() * holes.length);
       return holes[index];
     }
-
+  
     function showUsagi() {
       const hole = randomHole();
       const usagi = hole.querySelector('.usagi');
       usagi.classList.add('show');
-
-      usagi.onclick = function () {
+  
+      // 在整個洞上偵測點擊（支援手機）
+      hole.onclick = () => {
         if (usagi.classList.contains('show')) {
           score++;
           scoreDisplay.textContent = `分數：${score}`;
           usagi.classList.remove('show');
+  
+          // 加入擊中特效
+          const effect = document.createElement('div');
+          effect.classList.add('hit-effect');
+          hole.appendChild(effect);
+          setTimeout(() => effect.remove(), 300); // 特效動畫後移除
         }
       };
-
+  
+      // 自動消失
       setTimeout(() => {
         usagi.classList.remove('show');
-      }, 800); // 烏薩奇出現時間
+      }, 800);
     }
-
+  
     function startGame() {
       score = 0;
       timeLeft = 30;
       scoreDisplay.textContent = "分數：0";
       timeDisplay.textContent = "時間：30 秒";
-
+  
       gameInterval = setInterval(showUsagi, 1000);
       countdownInterval = setInterval(() => {
         timeLeft--;
@@ -143,6 +93,4 @@
       }, 1000);
     }
   </script>
-
-</body>
-</html>
+  
