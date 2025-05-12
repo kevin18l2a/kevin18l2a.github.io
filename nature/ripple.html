@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>漣漪模擬器</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: radial-gradient(circle, #60a5fa 0%, #1e3a8a 100%);
+    }
+
+    #ripple-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .ripple {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      animation: ripple-animation 2.5s ease-out forwards;
+    }
+
+    @keyframes ripple-animation {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(20);
+        opacity: 0;
+      }
+    }
+
+    .watermark {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      color: white;
+      font-size: 14px;
+      font-family: sans-serif;
+      opacity: 0.5;
+    }
+
+    .color-picker-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    input[type="color"] {
+      width: 40px;
+      height: 40px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="ripple-container"></div>
+  <div class="watermark">💧 點擊產生漣漪</div>
+
+  <div class="color-picker-container">
+    <label for="color-picker">選擇漣漪顏色:</label>
+    <input type="color" id="color-picker" value="#ffffff" />
+  </div>
+
+  <script>
+    const container = document.getElementById("ripple-container");
+    const colorPicker = document.getElementById("color-picker");
+
+    let rippleColor = colorPicker.value; // 初始顏色為白色
+
+    // 當顏色變更時，更新漣漪顏色
+    colorPicker.addEventListener("input", () => {
+      rippleColor = colorPicker.value;
+    });
+
+    // 創建漣漪動畫
+    function createRipple(x, y) {
+      const ripple = document.createElement("div");
+      ripple.className = "ripple";
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+
+      // 使用選擇的顏色作為漣漪顏色
+      ripple.style.borderColor = rippleColor;
+
+      container.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
+    }
+
+    let isDrawing = false;
+    let lastRippleTime = 0;
+    const rippleInterval = 100; // 限制漣漪產生頻率（毫秒）
+
+    // 點擊產生漣漪
+    document.addEventListener("mousedown", (e) => {
+      isDrawing = true;
+      createRipple(e.clientX, e.clientY);
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (isDrawing) {
+        const now = Date.now();
+        if (now - lastRippleTime > rippleInterval) {
+          createRipple(e.clientX, e.clientY);
+          lastRippleTime = now;
+        }
+      }
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDrawing = false;
+    });
+
+    // 手機觸控產生漣漪
+    document.addEventListener("touchstart", (e) => {
+      isDrawing = true;
+      const touch = e.touches[0];
+      createRipple(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    document.addEventListener("touchmove", (e) => {
+      if (isDrawing) {
+        const now = Date.now();
+        if (now - lastRippleTime > rippleInterval) {
+          const touch = e.touches[0];
+          createRipple(touch.clientX, touch.clientY);
+          lastRippleTime = now;
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener("touchend", () => {
+      isDrawing = false;
+    });
+  </script>
+</body>
+</html>

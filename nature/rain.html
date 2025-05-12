@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>模擬降雨系統</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: linear-gradient(to top, #0f172a, #1e293b);
+      font-family: sans-serif;
+      color: white;
+    }
+
+    #rain-container, #splash-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    .raindrop {
+      position: absolute;
+      width: 2px;
+      height: 20px;
+      background: #38bdf8;
+      opacity: 0.7;
+      animation: fall linear infinite;
+    }
+
+    .splash {
+      position: absolute;
+      width: 4px;
+      height: 2px;
+      background: #38bdf8;
+      border-radius: 50%;
+      animation: splash 0.3s linear;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh);
+      }
+    }
+
+    @keyframes splash {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    #flash {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .controls {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 41, 59, 0.7);
+      padding: 10px 20px;
+      border-radius: 12px;
+      z-index: 1000;
+    }
+
+    input[type="range"] {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    🌧️ 雨勢大小：
+    <input type="range" id="rainIntensity" min="10" max="500" value="150">
+  </div>
+
+  <div id="rain-container"></div>
+  <div id="splash-container"></div>
+  <div id="flash"></div>
+
+  <!-- 雨聲音效 -->
+  <audio id="rain-sound" loop autoplay>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_a1a5a687fa.mp3?filename=heavy-rain-loop-23303.mp3" type="audio/mpeg">
+    您的瀏覽器不支援 audio 標籤。
+  </audio>
+
+  <script>
+    const rainContainer = document.getElementById('rain-container');
+    const splashContainer = document.getElementById('splash-container');
+    const flash = document.getElementById('flash');
+    const intensitySlider = document.getElementById('rainIntensity');
+    const rainSound = document.getElementById('rain-sound');
+
+    let rainAmount = parseInt(intensitySlider.value);
+    let rainIntervals = [];
+
+    function createRaindrop() {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+      drop.style.left = Math.random() * window.innerWidth + 'px';
+      drop.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+      drop.style.opacity = Math.random();
+      rainContainer.appendChild(drop);
+
+      // 水花
+      setTimeout(() => {
+        createSplash(parseFloat(drop.style.left));
+        rainContainer.removeChild(drop);
+      }, 1000);
+    }
+
+    function createSplash(x) {
+      const splash = document.createElement('div');
+      splash.className = 'splash';
+      splash.style.left = x + 'px';
+      splash.style.top = (window.innerHeight - 10) + 'px';
+      splashContainer.appendChild(splash);
+
+      setTimeout(() => splashContainer.removeChild(splash), 300);
+    }
+
+    function startRain() {
+      rainIntervals.forEach(clearInterval);
+      rainIntervals = [];
+
+      const interval = setInterval(() => {
+        for (let i = 0; i < rainAmount / 10; i++) {
+          createRaindrop();
+        }
+      }, 100);
+      rainIntervals.push(interval);
+    }
+
+    intensitySlider.addEventListener('input', () => {
+      rainAmount = parseInt(intensitySlider.value);
+      startRain();
+    });
+
+    // 閃電
+    function flashLightning() {
+      if (Math.random() < 0.05) {  // 閃電機率
+        flash.style.opacity = '1';
+        setTimeout(() => flash.style.opacity = '0', 100 + Math.random() * 200);
+      }
+    }
+
+    setInterval(flashLightning, 500);
+
+    // 雨聲啟動時處理（部分瀏覽器需點擊後才能播放）
+    document.body.addEventListener('click', () => {
+      rainSound.play().catch(() => {});
+    });
+
+    // 初始啟動
+    startRain();
+  </script>
+</body>
+</html>
