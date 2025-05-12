@@ -69,10 +69,7 @@
       cursor: pointer;
       display: inline-block;
     }
-    .investor-name:hover {
-      color: #facc15;
-    }
-    .stock-name:hover {
+    .investor-name:hover, .stock-name:hover {
       color: #facc15;
     }
     #chartPanel {
@@ -159,23 +156,20 @@
     function showPieChart(name) {
       document.getElementById('pieChart').style.display = 'block';
       document.getElementById('barChart').style.display = 'none';
-      const portfolio = investorData[name];
-      const chartContainer = document.getElementById('pieChart');
-      const chart = echarts.init(chartContainer);
-      const data = portfolio.map(item => ({ value: item.percent, name: item.stock }));
-      const option = {
+      const chart = echarts.init(document.getElementById('pieChart'));
+      const data = investorData[name].map(item => ({ value: item.percent, name: item.stock }));
+      chart.setOption({
         title: {
           text: `${name} 投資組合`, left: 'center', top: 'center',
           textStyle: { color: '#f8fafc', fontSize: 18 }
         },
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
         series: [{
-          name: '投資比例', type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
+          type: 'pie', radius: ['40%', '70%'],
           label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc' },
-          labelLine: { show: false }, data
+          data
         }]
-      };
-      chart.setOption(option);
+      });
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
       chart.resize();
@@ -183,24 +177,22 @@
     function showBarChart(stock) {
       document.getElementById('barChart').style.display = 'block';
       document.getElementById('pieChart').style.display = 'none';
-      const data = [];
-      for (const [name, portfolio] of Object.entries(investorData)) {
+      const data = Object.entries(investorData).map(([name, portfolio]) => {
         const found = portfolio.find(p => p.stock === stock);
-        if (found) {
-          data.push({ name, value: found.percent });
-        }
-      }
-      const chartContainer = document.getElementById('barChart');
-      const chart = echarts.init(chartContainer);
-      const option = {
+        return found ? { name, value: found.percent } : null;
+      }).filter(Boolean);
+      const chart = echarts.init(document.getElementById('barChart'));
+      chart.setOption({
         title: {
           text: `${stock} 各投資人持股比例`, left: 'center',
           textStyle: { color: '#f8fafc', fontSize: 18 }
         },
+        grid: { containLabel: true },
         tooltip: {},
         xAxis: {
           type: 'category', data: data.map(d => d.name),
-          axisLabel: { color: '#f8fafc' }
+          axisLabel: { color: '#f8fafc' },
+          axisTick: { alignWithLabel: true }
         },
         yAxis: {
           type: 'value', axisLabel: { color: '#f8fafc' }
@@ -209,8 +201,7 @@
           type: 'bar', data: data.map(d => d.value),
           itemStyle: { color: '#38bdf8' }
         }]
-      };
-      chart.setOption(option);
+      });
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
       chart.resize();
@@ -277,11 +268,9 @@
       document.getElementById(tabName).classList.add('active');
     }
     window.addEventListener('resize', function() {
-      const pieContainer = document.getElementById('pieChart');
-      const pieChart = echarts.getInstanceByDom(pieContainer);
+      const pieChart = echarts.getInstanceByDom(document.getElementById('pieChart'));
       if (pieChart) pieChart.resize();
-      const barContainer = document.getElementById('barChart');
-      const barChart = echarts.getInstanceByDom(barContainer);
+      const barChart = echarts.getInstanceByDom(document.getElementById('barChart'));
       if (barChart) barChart.resize();
     });
   </script>
