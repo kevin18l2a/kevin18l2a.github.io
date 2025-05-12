@@ -73,14 +73,20 @@
       color: #facc15;
     }
     #chartPanel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 40px;
+      padding: 20px;
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
+      z-index: 1000;
       display: none;
-      width: 80%;
+      width: 90vw;
+      height: 90vh;
       max-width: 1000px;
-      margin: 40px auto;
+      max-height: 800px;
       box-sizing: border-box;
     }
     #closeChartBtn {
@@ -107,7 +113,7 @@
     }
     #pieChart {
       width: 100%;
-      height: 400px; /* Adjusted to fit within the panel */
+      height: 100%;
     }
   </style>
 </head>
@@ -239,10 +245,12 @@
         myChart.resize();
       });
 
+      document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
     }
 
     function closeChart() {
+      document.getElementById('overlay').style.display = 'none';
       document.getElementById('chartPanel').style.display = 'none';
     }
 
