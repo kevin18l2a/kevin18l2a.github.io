@@ -10,23 +10,18 @@
       background: #0f172a;
       color: #f8fafc;
       padding: 20px;
-      font-size: 20px; /* 增加預設字體大小 */
     }
     .tabs {
       display: flex;
       margin-bottom: 20px;
-      flex-wrap: wrap;
     }
     .tab {
-      padding: 14px 28px; /* 增加標籤內部的間距 */
+      padding: 10px 20px;
       background-color: #334155;
-      margin-right: 14px;
-      margin-bottom: 14px;
+      margin-right: 10px;
       border-radius: 8px;
       cursor: pointer;
       color: #f8fafc;
-      text-align: center;
-      font-size: 24px; /* 增加標籤字體大小 */
     }
     .tab.active {
       background-color: #38bdf8;
@@ -49,9 +44,8 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     th, td {
-      padding: 20px 22px; /* 增加表格內部的間距 */
+      padding: 12px 15px;
       text-align: center;
-      font-size: 20px; /* 增加表格字體大小 */
     }
     th {
       background-color: #334155;
@@ -60,11 +54,16 @@
     tr:nth-child(even) td {
       background-color: #273549;
     }
+    .positive {
+      color: #4ade80;
+    }
+    .negative {
+      color: #f87171;
+    }
     h2 {
       border-bottom: 1px solid #38bdf8;
-      padding-bottom: 12px;
+      padding-bottom: 5px;
       margin-top: 40px;
-      font-size: 28px; /* 增加標題字體大小 */
     }
     .investor-name:hover, .stock-name:hover {
       color: #facc15;
@@ -76,27 +75,26 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 20px;
+      padding: 10px;
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: none;
-      width: 90vw;
+      width: 100vw;
+      height: 100vh;
       max-width: 800px;
-      height: 80vh;
       max-height: 600px;
     }
     #closeChartBtn {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      top: 10px;
+      right: 10px;
       background: #334155;
       color: #f8fafc;
       border: none;
-      padding: 14px 18px; /* 增加關閉按鈕的內邊距 */
+      padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 20px;
     }
     #overlay {
       position: fixed;
@@ -113,35 +111,60 @@
       height: 100%;
     }
   
-    @media (max-width: 600px) {
+    /* Media query for mobile devices */
+    @media (max-width: 768px) {
       body {
-        font-size: 22px; /* 增加手機版字體 */
-        padding: 15px;
+        font-size: 20px;  /* Increase font size for readability */
       }
-      .tabs {
-        flex-direction: column;
-      }
-      .tab {
-        margin-right: 0;
-        margin-bottom: 14px;
-        font-size: 26px; /* 手機版標籤字體增大 */
-      }
-      table {
-        font-size: 20px; /* 手機版表格字體 */
-      }
-      th, td {
-        padding: 14px 16px; /* 手機版表格內部邊距 */
+      h1 {
+        font-size: 2rem;  /* Larger heading */
       }
       h2 {
-        font-size: 30px; /* 手機版標題字體 */
+        font-size: 2rem;  /* Larger subheadings */
+      }
+      th, td {
+        padding: 10px 12px;  /* Slightly smaller padding for compactness */
+        font-size: 1rem;  /* Larger text for better readability */
+      }
+      .tab {
+        padding: 12px 25px;  /* Increase tab padding */
+        font-size: 1.8rem;  /* Larger tab text */
+      }
+      .tab.active {
+        font-weight: bold;
       }
       #chartPanel {
-        width: 90vw;
-        max-width: none;
-        height: 70vh;
+        width: 90vw;  /* Ensure chart panel is responsive */
+        height: 80vh;
+      }
+    }
+  
+    /* Media query for small mobile devices */
+    @media (max-width: 480px) {
+      body {
+        font-size: 20px;  /* Further increase font size for very small screens */
+      }
+      h1 {
+        font-size: 2.5rem;  /* Make heading larger */
+      }
+      h2 {
+        font-size: 1.8rem;  /* Make subheading larger */
+      }
+      th, td {
+        padding: 8px 10px;  /* More compact padding for very small screens */
+        font-size: 1.2rem;  /* Adjust font size for very small screens */
+      }
+      .tab {
+        padding: 15px 30px;  /* Increase tab size */
+        font-size: 1.5rem;  /* Larger tab font size */
+      }
+      #chartPanel {
+        width: 95vw;  /* Ensure chart panel is responsive */
+        height: 85vh;
       }
     }
   </style>
+  
   
 </head>
 <body>
