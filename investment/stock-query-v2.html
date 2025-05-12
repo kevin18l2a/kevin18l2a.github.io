@@ -160,6 +160,7 @@
 
     const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
     let priceData = {};
+    let chart = null;
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -183,7 +184,9 @@
       const labels = portfolio.map(p => p.stock);
       const data = portfolio.map(p => p.percent);
 
-      new Chart(document.getElementById("pieChart"), {
+      if (chart) chart.destroy();
+
+      chart = new Chart(document.getElementById("pieChart"), {
         type: 'pie',
         data: {
           labels: labels,
@@ -208,21 +211,21 @@
       for (const [name, portfolio] of Object.entries(investorData)) {
         let total = 0;
         let html = `<h2 onclick="showPie('${name}')">${name}</h2>`;
-        html += `<table><thead><tr><th>股票</th><th>初始價</th><th>現價</th><th>比例%</th></tr></thead><tbody>`;
+        html += `<table><thead><tr><th>股票</th><th>初始價</th><th>現價</th><th>比例%</th><th>報酬率%</th></tr></thead><tbody>`;
 
         for (const { stock, percent } of portfolio) {
           const p = priceData[stock];
           if (!p) continue;
           const roi = (p.current - p.init) / p.init * 100;
           total += roi * (percent / 100);
-          html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td class="${p.current >= p.init ? 'positive' : 'negative'}">${p.current.toFixed(2)}</td><td>${percent}</td></tr>`;
+          html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td class="${p.current >= p.init ? 'positive' : 'negative'}">${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
 
           if (!stockROI[stock]) stockROI[stock] = { total: 0, count: 0, init: p.init, current: p.current };
           stockROI[stock].total += roi * percent;
           stockROI[stock].count += percent;
         }
 
-        html += `</tbody><tfoot><tr><td colspan="3">總報酬率</td><td class="${total >= 0 ? 'positive' : 'negative'}">${total.toFixed(2)}%</td></tr></tfoot></table>`;
+        html += `</tbody><tfoot><tr><td colspan="4">總報酬率</td><td class="${total >= 0 ? 'positive' : 'negative'}">${total.toFixed(2)}%</td></tr></tfoot></table>`;
         tab1.innerHTML += html;
         investorROI.push({ name, roi: total });
       }
