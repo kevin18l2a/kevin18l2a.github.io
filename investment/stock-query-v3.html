@@ -201,8 +201,9 @@
       const portfolio = investorData[name];
       const svg = d3.select("#pieChart").html(""); // 清空舊的圖表
 
-      const width = parseInt(svg.style("width"));
-      const height = parseInt(svg.style("height"));
+      // 設置 SVG 容器大小
+      const width = 500;
+      const height = 500;
       const radius = Math.min(width, height) / 2;
 
       const color = d3.scaleOrdinal(d3.schemeCategory10);
