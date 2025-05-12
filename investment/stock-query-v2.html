@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -64,19 +65,49 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
-    .investor-panel {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #334155;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    .investor-name {
+      cursor: pointer;
+      display: inline-block;
     }
-    .investor:hover {
-      color: #38bdf8;
+    .investor-name:hover {
+      color: #facc15;
+    }
+    #chartPanel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      display: none;
+    }
+    #chartPanel canvas {
+      max-width: 400px;
+      max-height: 400px;
+    }
+    #closeChartBtn {
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>📈 投資人投報率報表</h1>
@@ -90,13 +121,15 @@
   <div id="stocks" class="tab-content"></div>
   <div id="ranking" class="tab-content"></div>
 
-  <div id="investor-panel" class="investor-panel">
-    <h2>投資人投資組合</h2>
-    <canvas id="pie-chart"></canvas>
+  <div id="overlay" onclick="closeChart()"></div>
+  <div id="chartPanel">
+    <canvas id="pieChart"></canvas>
+    <button id="closeChartBtn" onclick="closeChart()">關閉</button>
   </div>
 
   <script>
     let priceData = {};
+    let chartInstance;
 
     const investorData = {
       "豪": [
@@ -157,6 +190,42 @@
       return data;
     }
 
+    function showPieChart(name) {
+      const portfolio = investorData[name];
+      const labels = portfolio.map(item => item.stock);
+      const data = portfolio.map(item => item.percent);
+
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: [
+              '#60a5fa','#818cf8','#f472b6','#facc15','#34d399','#f87171','#fb923c','#a78bfa','#2dd4bf'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: `${name} 的投資組合比例` }
+          }
+        }
+      });
+
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('chartPanel').style.display = 'block';
+    }
+
+    function closeChart() {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('chartPanel').style.display = 'none';
+    }
+
     function generateInvestorReport() {
       const container = document.getElementById("investors");
       container.innerHTML = '';
@@ -164,7 +233,7 @@
 
       for (const [name, portfolio] of Object.entries(investorData)) {
         let totalROI = 0;
-        let html = `<h2 class="investor" onmouseover="highlightInvestor(event)" onmouseout="resetInvestor(event)" onclick="showInvestorPanel('${name}')">${name}</h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+        let html = `<h2><span class="investor-name" onclick="showPieChart('${name}')">${name}</span></h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
 
         for (const { stock, percent } of portfolio) {
           const p = priceData[stock];
@@ -182,53 +251,7 @@
         results.push({ name, roi: totalROI });
       }
 
-      // 存到 ranking tab
       generateInvestorRanking(results);
-    }
-
-    function showInvestorPanel(investorName) {
-      const portfolio = investorData[investorName];
-      const canvas = document.getElementById('pie-chart');
-      const ctx = canvas.getContext('2d');
-      
-      const labels = portfolio.map(item => item.stock);
-      const data = portfolio.map(item => item.percent);
-
-      new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: ['#38bdf8', '#4ade80', '#f87171', '#fbbf24', '#f97316', '#9333ea'],
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top',
-            },
-            tooltip: {
-              callbacks: {
-                label: function(tooltipItem) {
-                  return tooltipItem.label + ': ' + tooltipItem.raw + '%';
-                }
-              }
-            }
-          }
-        }
-      });
-
-      document.getElementById('investor-panel').style.display = 'block';
-    }
-
-    function highlightInvestor(event) {
-      event.target.style.color = '#38bdf8';
-    }
-
-    function resetInvestor(event) {
-      event.target.style.color = '#f8fafc';
     }
 
     function generateStockPerformance() {
