@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>彈珠碰撞遊戲</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+
+    canvas {
+      display: block;
+      background-color: #f0f0f0;
+    }
+
+    .controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      color: #333;
+    }
+
+    .controls button {
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .controls button:hover {
+      background-color: #45a049;
+    }
+
+    .controls select {
+      padding: 5px;
+      margin: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="resetBtn">重設畫面</button>
+    <button id="addBallBtn">新增彈珠</button>
+    <select id="ballSelector">
+      <option value="💩">💩 彈珠</option>
+      <option value="🐰">🐰 彈珠</option>
+      <option value="🐣">🐣 彈珠</option>
+      <option value="🤔️">🤔️ 彈珠</option>
+      <option value="🧐">🧐 彈珠</option>
+    </select>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const balls = [];
+    let selectedBall = '💩';
+
+    // 當前選擇的彈珠
+    document.getElementById('ballSelector').addEventListener('change', function () {
+      selectedBall = this.value;
+    });
+
+    // 重設遊戲
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+    // 新增彈珠按鈕
+    document.getElementById('addBallBtn').addEventListener('click', function() {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      addBall(x, y);
+    });
+
+    function resetGame() {
+      balls.length = 0; // 清空彈珠
+    }
+
+    // 彈珠類別
+    class Ball {
+      constructor(x, y, size, symbol) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.symbol = symbol;
+        this.originalSize = size; // 記錄原始大小
+        this.velocityX = Math.random() * 4 + 2; // 隨機初始速度
+        this.velocityY = Math.random() * 4 + 2; // 隨機初始速度
+        this.angle = Math.random() * Math.PI * 2; // 隨機方向
+        this.velocityX = Math.cos(this.angle) * this.velocityX;
+        this.velocityY = Math.sin(this.angle) * this.velocityY;
+        this.acceleration = 1.05; // 每次點擊加速倍數
+        this.minSpeed = 0.5; // 最小速度，防止停下來
+        this.sizeMultiplier = 1; // 大小倍數
+        this.sizeIncrease = 1.5; // 碰撞時放大的大小
+        this.sizeTimer = 0; // 用來計算放大特效時間
+      }
+
+      update() {
+        // 確保彈珠的速度不為0
+        if (Math.abs(this.velocityX) < this.minSpeed) {
+          this.velocityX = Math.sign(this.velocityX) * this.minSpeed;
+        }
+        if (Math.abs(this.velocityY) < this.minSpeed) {
+          this.velocityY = Math.sign(this.velocityY) * this.minSpeed;
+        }
+
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+
+        // 如果碰到邊界反彈
+        if (this.x + this.size > canvas.width || this.x - this.size < 0) {
+          this.velocityX = -this.velocityX;
+          this.x = Math.min(Math.max(this.x, this.size), canvas.width - this.size);
+        }
+        if (this.y + this.size > canvas.height || this.y - this.size < 0) {
+          this.velocityY = -this.velocityY;
+          this.y = Math.min(Math.max(this.y, this.size), canvas.height - this.size);
+        }
+
+        // 處理放大特效時間
+        if (this.sizeTimer > 0) {
+          this.sizeTimer -= 0.1;
+          this.size = this.originalSize * this.sizeMultiplier * (1 + (this.sizeTimer / 100));
+        } else {
+          this.size = this.originalSize * this.sizeMultiplier;
+        }
+
+        this.draw();
+      }
+
+      draw() {
+        ctx.font = `${this.size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.symbol, this.x, this.y);
+      }
+
+      // 加速
+      accelerate() {
+        const randomFactor = Math.random() * 2 + 1; // 隨機加速因子
+        this.velocityX *= randomFactor;
+        this.velocityY *= randomFactor;
+      }
+
+      // 碰撞檢測
+      checkCollision(otherBall) {
+        const dx = this.x - otherBall.x;
+        const dy = this.y - otherBall.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < this.size + otherBall.size) {
+          // 碰撞時放大
+          this.sizeTimer = 100; // 設置放大時間
+          otherBall.sizeTimer = 100; // 設置對方放大時間
+
+          // 基本的碰撞反應：簡單交換速度
+          const angle = Math.atan2(dy, dx);
+          const targetVx = Math.cos(angle) * Math.abs(this.velocityX);
+          const targetVy = Math.sin(angle) * Math.abs(this.velocityY);
+          this.velocityX = targetVx;
+          this.velocityY = targetVy;
+
+          // 在碰撞後稍微調整彈珠的運動方向和速度
+          this.handleBounce(dx, dy, otherBall);
+        }
+      }
+
+      handleBounce(dx, dy, otherBall) {
+        // 修正位置並確保不會卡住
+        const overlap = this.size + otherBall.size - Math.sqrt(dx * dx + dy * dy);
+        const normalizeX = dx / Math.abs(dx);
+        const normalizeY = dy / Math.abs(dy);
+        this.x += normalizeX * overlap / 2;
+        this.y += normalizeY * overlap / 2;
+        otherBall.x -= normalizeX * overlap / 2;
+        otherBall.y -= normalizeY * overlap / 2;
+      }
+    }
+
+    // 點擊彈珠加速
+    canvas.addEventListener('click', (e) => {
+      for (const ball of balls) {
+        const dist = Math.sqrt(Math.pow(ball.x - e.x, 2) + Math.pow(ball.y - e.y, 2));
+        if (dist < ball.size) {
+          ball.accelerate();  // 點擊彈珠加速
+          ball.sizeTimer = 100; // 點擊時瞬間放大
+        }
+      }
+    });
+
+    // 新增彈珠
+    function addBall(x, y) {
+      const size = Math.random() * 20 + 20;  // 隨機大小
+      const ball = new Ball(x, y, size, selectedBall);
+      balls.push(ball);
+    }
+
+    // 更新遊戲畫面
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 檢查彈珠之間的碰撞
+      for (let i = 0; i < balls.length; i++) {
+        for (let j = i + 1; j < balls.length; j++) {
+          balls[i].checkCollision(balls[j]);
+        }
+      }
+
+      for (const ball of balls) {
+        ball.update();
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    update();  // 開始遊戲循環
+
+  </script>
+</body>
+</html>
