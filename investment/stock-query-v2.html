@@ -60,8 +60,7 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
-    .panel {
-      display: none;
+    #panel {
       position: fixed;
       top: 50px;
       right: 20px;
@@ -69,8 +68,9 @@
       background: #1e293b;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
       z-index: 999;
+      display: none;
     }
     .panel-close {
       cursor: pointer;
@@ -78,8 +78,16 @@
       color: #f87171;
       font-weight: bold;
     }
-    canvas {
-      max-width: 100%;
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
@@ -146,6 +154,7 @@
     const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
     let priceData = {};
+    let pieChartInstance = null;
 
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
@@ -175,12 +184,11 @@
 
       for (const [name, portfolio] of Object.entries(investorData)) {
         let totalROI = 0;
-        let html = `<h2>${name}</h2><table><thead><tr>
+        let html = `<h2 onclick="showPieChart('${name}', ${JSON.stringify(portfolio)})">${name}</h2>
+          <table><thead><tr>
             <th>股票代號</th><th>初始價格</th><th>目前價格</th>
             <th>投資比例 (%)</th><th>報酬率 (%)</th>
           </tr></thead><tbody>`;
-
-        const pieData = [];
 
         for (const item of portfolio) {
           const p = priceData[item.stock];
@@ -195,8 +203,6 @@
               <td>${item.percent}</td>
               <td class="${roiClass}">${roi.toFixed(2)}%</td>
             </tr>`;
-
-            pieData.push({ stock: item.stock, percent: item.percent });
           }
         }
 
@@ -207,7 +213,6 @@
           </tr></tfoot></table>`;
 
         container.innerHTML += html;
-        showPieChart(name, pieData);
       }
     }
 
@@ -216,15 +221,17 @@
       const labels = pieData.map(item => item.stock);
       const data = pieData.map(item => item.percent);
 
-      new Chart(document.getElementById("pieChart"), {
+      if (pieChartInstance) {
+        pieChartInstance.destroy();
+      }
+
+      pieChartInstance = new Chart(document.getElementById("pieChart"), {
         type: 'pie',
         data: {
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: [
-              '#38bdf8','#4ade80','#f87171','#fbbf24','#9333ea','#e11d48'
-            ],
+            backgroundColor: ['#38bdf8', '#4ade80', '#f87171', '#fbbf24', '#9333ea', '#e11d48'],
             borderColor: '#1e293b',
             borderWidth: 2
           }]
@@ -232,9 +239,7 @@
         options: {
           plugins: {
             datalabels: {
-              formatter: (value, context) => {
-                return `${context.chart.data.labels[context.dataIndex]}: ${value}%`;
-              },
+              formatter: (value, context) => `${context.chart.data.labels[context.dataIndex]}: ${value}%`,
               color: '#fff',
               font: { weight: 'bold' }
             }
@@ -242,80 +247,26 @@
           hover: {
             onHover: function(event, chartElement) {
               if (chartElement.length) {
-                chartElement[0]._model.backgroundColor = '#fbbf24';  // 改變鼠標懸停時的顏色
+                chartElement[0]._model.backgroundColor = '#fbbf24';
               }
             }
           }
         }
       });
+
       container.style.display = 'block';
     }
 
-    function renderStockRanking() {
-      const container = document.getElementById("content");
-      container.innerHTML = `<h2>📊 個股績效排名</h2>`;
-      const stocks = Object.entries(priceData).map(([stock, data]) => {
-        const roi = ((data.current - data.init) / data.init) * 100;
-        return { stock, roi, init: data.init, current: data.current };
-      });
-
-      stocks.sort((a, b) => b.roi - a.roi);
-
-      let html = `<table><thead>
-        <tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>報酬率 (%)</th></tr>
-      </thead><tbody>`;
-      for (const s of stocks) {
-        const roiClass = s.roi >= 0 ? 'positive' : 'negative';
-        html += `<tr>
-          <td>${s.stock}</td>
-          <td>${s.init.toFixed(2)}</td>
-          <td>${s.current.toFixed(2)}</td>
-          <td class="${roiClass}">${s.roi.toFixed(2)}%</td>
-        </tr>`;
-      }
-      html += '</tbody></table>';
-      container.innerHTML += html;
+    function fetchStockPriceData() {
+      fetch(priceDataUrl)
+        .then(response => response.text())
+        .then(data => {
+          priceData = parseCSV(data);
+          renderInvestorDetail();
+        });
     }
 
-    function renderInvestorRanking() {
-      const container = document.getElementById("content");
-      container.innerHTML = `<h2>🏆 投資人總報酬率排名</h2>`;
-      const ranking = [];
-
-      for (const [name, portfolio] of Object.entries(investorData)) {
-        let totalROI = 0;
-        for (const item of portfolio) {
-          const p = priceData[item.stock];
-          if (p) {
-            const roi = ((p.current - p.init) / p.init) * 100;
-            totalROI += roi * (item.percent / 100);
-          }
-        }
-        ranking.push({ name, roi: totalROI });
-      }
-
-      ranking.sort((a, b) => b.roi - a.roi);
-
-      let html = `<table><thead>
-        <tr><th>投資人</th><th>總報酬率 (%)</th></tr>
-      </thead><tbody>`;
-      for (const r of ranking) {
-        const roiClass = r.roi >= 0 ? 'positive' : 'negative';
-        html += `<tr>
-          <td>${r.name}</td>
-          <td class="${roiClass}">${r.roi.toFixed(2)}%</td>
-        </tr>`;
-      }
-      html += '</tbody></table>';
-      container.innerHTML += html;
-    }
-
-    fetch(priceDataUrl)
-      .then(res => res.text())
-      .then(csv => {
-        priceData = parseCSV(csv);
-        renderInvestorDetail(); // 預設載入第一個 tab
-      });
+    fetchStockPriceData();
   </script>
 </body>
 </html>
