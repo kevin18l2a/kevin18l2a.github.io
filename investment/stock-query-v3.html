@@ -253,6 +253,10 @@
       document.getElementById('chartPanel').style.display = 'none';
     }
 
+    window.addEventListener('resize', function() {
+      if (myChart) myChart.resize();
+    });
+
     function generateInvestorReport() {
       const container = document.getElementById("investors");
       container.innerHTML = '';
