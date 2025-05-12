@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -137,8 +137,7 @@
 
   <script>
     let priceData = {};
-    let myChart;
-
+    
     const investorData = {
       "豪": [
         { percent: 30, stock: "PLTR" },
@@ -200,49 +199,39 @@
 
     function showPieChart(name) {
       const portfolio = investorData[name];
-      const chartDom = document.getElementById('pieChart');
-      if (myChart) myChart.dispose();
-      myChart = echarts.init(chartDom);
+      const svg = d3.select("#pieChart").html(""); // 清空舊的圖表
+
+      const width = parseInt(svg.style("width"));
+      const height = parseInt(svg.style("height"));
+      const radius = Math.min(width, height) / 2;
+
+      const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+      const arc = d3.arc().outerRadius(radius - 10).innerRadius(0);
+      const pie = d3.pie().sort(null).value(d => d.value);
+
+      const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
 
       const data = portfolio.map(item => ({
         name: item.stock,
         value: item.percent
       }));
 
-      const option = {
-        title: {
-          text: `${name} 的投資組合比例`,
-          left: 'center',
-          top: 10,
-          textStyle: { color: '#f8fafc', fontSize: 20 }
-        },
-        tooltip: { trigger: 'item' },
-        legend: {
-          orient: 'vertical',
-          left: 'right',
-          top: 'middle',
-          textStyle: { color: '#f8fafc' }
-        },
-        series: [{
-          type: 'pie',
-          radius: ['50%', '75%'],
-          center: ['50%', '50%'],
-          data,
-          label: {
-            formatter: '{b}: {d}%',
-            color: '#f8fafc',
-            fontSize: 16
-          },
-          labelLine: {
-            lineStyle: { color: '#f8fafc' }
-          }
-        }]
-      };
+      const path = g.selectAll(".arc")
+        .data(pie(data))
+        .enter().append("g")
+        .attr("class", "arc");
 
-      myChart.setOption(option);
+      path.append("path")
+        .attr("d", arc)
+        .style("fill", d => color(d.data.name));
 
-      // 強制調整圖表尺寸以適應容器
-      myChart.resize();
+      path.append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("dy", ".35em")
+        .style("text-anchor", "middle")
+        .style("fill", "#f8fafc")
+        .text(d => `${d.data.name} (${d.data.value}%)`);
 
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
@@ -252,10 +241,6 @@
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('chartPanel').style.display = 'none';
     }
-
-    window.addEventListener('resize', function() {
-      if (myChart) myChart.resize();
-    });
 
     function generateInvestorReport() {
       const container = document.getElementById("investors");
