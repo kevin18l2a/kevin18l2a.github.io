@@ -292,6 +292,23 @@
       container.appendChild(table);
     }
 
+    function switchTab(tab) {
+      // 隱藏所有標籤內容
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // 移除所有標籤的 active 類
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tabElement => tabElement.classList.remove('active'));
+
+      // 顯示選中的標籤內容
+      document.getElementById(tab).classList.add('active');
+
+      // 設置選中的標籤為 active
+      const activeTab = Array.from(tabs).find(tabElement => tabElement.innerText === document.querySelector(`.tab-content#${tab}`).previousElementSibling.innerText);
+      activeTab.classList.add('active');
+    }
+
     // 初始化頁面
     fetch(priceDataUrl)
       .then(response => response.text())
