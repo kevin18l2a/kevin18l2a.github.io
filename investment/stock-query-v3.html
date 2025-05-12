@@ -73,32 +73,32 @@
       color: #facc15;
     }
     #chartPanel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1e293b;
-    padding: 10px;
-    border-radius: 16px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
-    z-index: 1000;
-    display: none;
-    width: 100vw;
-    height: 100vh;
-    max-width: 800px;
-    max-height: 600px;
-  }
-  #closeChartBtn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #334155;
-    color: #f8fafc;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
+      z-index: 1000;
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      max-width: 800px;
+      max-height: 600px;
+    }
+    #closeChartBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
     #overlay {
       position: fixed;
       top: 0;
@@ -317,6 +317,16 @@
       document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
       document.getElementById(tabName).classList.add('active');
     }
+
+    window.addEventListener('resize', function() {
+      const chartContainer = document.getElementById('pieChart');
+      if (chartContainer) {
+        const chart = echarts.getInstanceByDom(chartContainer);
+        if (chart) {
+          chart.resize();
+        }
+      }
+    });
   </script>
 </body>
 </html>
