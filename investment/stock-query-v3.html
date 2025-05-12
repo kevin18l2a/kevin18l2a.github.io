@@ -241,9 +241,8 @@
 
       myChart.setOption(option);
 
-      window.addEventListener('resize', function() {
-        myChart.resize();
-      });
+      // 強制調整圖表尺寸以適應容器
+      myChart.resize();
 
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
