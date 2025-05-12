@@ -1,262 +1,324 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>投資人報酬率報表</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+  <title>投資人投報率報表</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.1/dist/echarts.min.js"></script>
   <style>
     body {
-      font-family: "Microsoft JhengHei", sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
       padding: 20px;
-      background: #f9f9f9;
+      margin: 0;
     }
-    nav button {
-      margin-right: 10px;
-      padding: 10px 15px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
+    h1 {
+      font-size: 1.8rem;
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 16px;
+      background-color: #334155;
+      margin: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      background-color: #ccc;
+      color: #f8fafc;
+      font-size: 0.95rem;
     }
-    nav button.active {
-      background-color: #007bff;
-      color: white;
+    .tab.active {
+      background-color: #38bdf8;
+      color: #0f172a;
+      font-weight: bold;
     }
-    section {
+    .tab-content {
       display: none;
-      margin-top: 20px;
     }
-    section.active {
+    .tab-content.active {
       display: block;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-bottom: 40px;
+      background-color: #1e293b;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-size: 0.9rem;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
     }
     th {
-      background-color: #f2f2f2;
+      background-color: #334155;
+      color: #38bdf8;
+    }
+    tr:nth-child(even) td {
+      background-color: #273549;
     }
     .positive {
-      color: green;
+      color: #4ade80;
     }
     .negative {
-      color: red;
+      color: #f87171;
     }
-    .stock-name {
+    h2 {
+      border-bottom: 1px solid #38bdf8;
+      padding-bottom: 5px;
+      margin-top: 40px;
+      font-size: 1.2rem;
+    }
+    .investor-name:hover, .stock-name:hover {
+      color: #facc15;
       cursor: pointer;
-      text-decoration: underline;
-      color: #007bff;
     }
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    #chartPanel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
+      z-index: 1000;
+      display: none;
+      width: 90vw;
+      height: 90vh;
+      max-width: 800px;
+      max-height: 600px;
+    }
+    #closeChartBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #334155;
+      color: #f8fafc;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
+    }
+    #pieChart, #barChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      table {
+        font-size: 0.75rem;
+        table-layout: fixed;
+      }
+      th, td {
+        padding: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tab {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+      h2 {
+        font-size: 0.95rem;
+      }
+    }
+
   </style>
 </head>
 <body>
-  <h1>投資人報酬率報表</h1>
-  <nav>
-    <button onclick="showTab('investors')" class="active">投資人績效</button>
-    <button onclick="showTab('stocks')">各股績效排名</button>
-    <button onclick="showTab('chart')">個股持有占比</button>
-  </nav>
-
-  <section id="investors" class="active"></section>
-  <section id="stocks"></section>
-  <section id="chart">
-    <div id="chart-container" style="width: 100%; height: 500px;"></div>
-  </section>
-
+  <h1>📈 投資人投報率報表</h1>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('investors')">各投資人明細</div>
+    <div class="tab" onclick="switchTab('stocks')">各股績效排名</div>
+    <div class="tab" onclick="switchTab('ranking')">投資人績效排名</div>
+  </div>
+  <div id="investors" class="tab-content active"></div>
+  <div id="stocks" class="tab-content"></div>
+  <div id="ranking" class="tab-content"></div>
+  <div id="overlay" onclick="closeChart()"></div>
+  <div id="chartPanel">
+    <div id="pieChart"></div>
+    <div id="barChart" style="display:none"></div>
+    <button id="closeChartBtn" onclick="closeChart()">關閉</button>
+  </div>
   <script>
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSm7FRuw2Yo4pKMR9mCMhs-70x21vAfBB9Esfl7wOn-YhnFDteGO1zHG3b98kE4X_d2JGLIRJHXDNs7/pub?gid=497743005&single=true&output=csv';
-    const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSm7FRuw2Yo4pKMR9mCMhs-70x21vAfBB9Esfl7wOn-YhnFDteGO1zHG3b98kE4X_d2JGLIRJHXDNs7/pub?gid=891490505&single=true&output=csv';
-
-    let investorData = {};
     let priceData = {};
-
-    function showTab(tabId) {
-      document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      event.target.classList.add('active');
-    }
+    const investorData = {
+      "豪": [ { percent: 30, stock: "PLTR" }, { percent: 30, stock: "VITL" }, { percent: 30, stock: "NVDA" }, { percent: 10, stock: "SRFM" } ],
+      "斌": [ { percent: 50, stock: "PLTR" }, { percent: 20, stock: "TSLA" }, { percent: 20, stock: "NVDA" }, { percent: 10, stock: "TSM" } ],
+      "嘉琦": [ { percent: 20, stock: "PLTR" }, { percent: 15, stock: "TSLA" }, { percent: 15, stock: "TSM" }, { percent: 10, stock: "NFLX" }, { percent: 10, stock: "META" }, { percent: 10, stock: "NVDA" }, { percent: 10, stock: "SOFI" }, { percent: 10, stock: "BTC" } ],
+      "老歐": [ { percent: 10, stock: "AAPL" }, { percent: 5, stock: "BB" }, { percent: 5, stock: "NVDA" }, { percent: 5, stock: "PLTR" }, { percent: 15, stock: "SOUN" }, { percent: 20, stock: "TSLA" }, { percent: 5, stock: "VITL" }, { percent: 20, stock: "VOO" }, { percent: 15, stock: "QQQ" } ],
+      "草": [ { percent: 30, stock: "2330" }, { percent: 20, stock: "NVDA" }, { percent: 10, stock: "2618" }, { percent: 15, stock: "PLTR" }, { percent: 10, stock: "TSLA" }, { percent: 15, stock: "AAPL" } ]
+    };
+    const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
     function parseCSV(csv) {
-      const rows = csv.trim().split('\n').map(r => r.split(','));
-      const header = rows[0];
-      const data = rows.slice(1);
-      const result = {};
-
-      for (const row of data) {
-        const name = row[0];
-        if (!result[name]) result[name] = [];
-        result[name].push({
-          stock: row[1],
-          percent: parseFloat(row[2])
-        });
+      const lines = csv.trim().split('\n');
+      const data = {};
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        const stock = row[0].trim();
+        const price_init = parseFloat(row[1]);
+        const price_current = parseFloat(row[2]);
+        data[stock] = { init: price_init, current: price_current };
       }
-      return result;
+      return data;
     }
 
-    function parsePriceCSV(csv) {
-      const rows = csv.trim().split('\n').map(r => r.split(','));
-      const header = rows[0];
-      const data = rows.slice(1);
-      const result = {};
-      for (const row of data) {
-        const stock = row[0];
-        const init = parseFloat(row[1]);
-        const current = parseFloat(row[2]);
-        result[stock] = { init, current };
-      }
-      return result;
-    }
-
-    function generateInvestorReport() {
-      const container = document.getElementById('investors');
-      container.innerHTML = '<h2>投資人績效</h2>';
-
-      const results = Object.entries(investorData).map(([name, portfolio]) => {
-        let roiSum = 0;
-        for (const { stock, percent } of portfolio) {
-          const p = priceData[stock];
-          if (!p) continue;
-          const roi = ((p.current - p.init) / p.init) * 100;
-          roiSum += roi * (percent / 100);
-        }
-        return { name, roi: roiSum };
-      }).sort((a, b) => b.roi - a.roi);
-
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>投資人</th>
-            <th>加權報酬率</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${results.map(item => `
-            <tr>
-              <td>${item.name}</td>
-              <td class="${item.roi >= 0 ? 'positive' : 'negative'}">${item.roi.toFixed(2)}%</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      `;
-      container.appendChild(table);
-    }
-
-    function generateStockRanking() {
-      const container = document.getElementById('stocks');
-      container.innerHTML = '<h2>各股績效排名</h2>';
-      const stockMap = {};
-
-      for (const [name, portfolio] of Object.entries(investorData)) {
-        for (const { stock, percent } of portfolio) {
-          const p = priceData[stock];
-          if (!p) continue;
-
-          const roi = ((p.current - p.init) / p.init) * 100;
-          if (!stockMap[stock]) {
-            stockMap[stock] = { totalWeight: 0, weightedROI: 0 };
-          }
-          stockMap[stock].totalWeight += percent;
-          stockMap[stock].weightedROI += roi * (percent / 100);
-        }
-      }
-
-      const result = Object.entries(stockMap).map(([stock, { totalWeight, weightedROI }]) => {
-        const averageROI = weightedROI / (totalWeight / 100);
-        return { stock, roi: averageROI };
+    function showPieChart(name) {
+      document.getElementById('pieChart').style.display = 'block';
+      document.getElementById('barChart').style.display = 'none';
+      const chart = echarts.init(document.getElementById('pieChart'));
+      const data = investorData[name].map(item => ({ value: item.percent, name: item.stock }));
+      chart.setOption({
+        title: {
+          text: `${name} 投資組合`, left: 'center', top: 'center',
+          textStyle: { color: '#f8fafc', fontSize: 18 }
+        },
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        series: [{
+          type: 'pie', radius: ['40%', '70%'],
+          label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc' },
+          data
+        }]
       });
-
-      result.sort((a, b) => b.roi - a.roi);
-
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>股票代號</th>
-            <th>平均報酬率</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${result.map(item => `
-            <tr>
-              <td class="stock-name" onclick="showBarChart('${item.stock}')">${item.stock}</td>
-              <td class="${item.roi >= 0 ? 'positive' : 'negative'}">${item.roi.toFixed(2)}%</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      `;
-      container.appendChild(table);
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('chartPanel').style.display = 'block';
+      chart.resize();
     }
 
     function showBarChart(stock) {
-      const chartDom = document.getElementById('chart-container');
-      const myChart = echarts.init(chartDom);
-
-      const data = [];
-      for (const [name, portfolio] of Object.entries(investorData)) {
-        for (const item of portfolio) {
-          if (item.stock === stock) {
-            data.push({ name, value: item.percent });
-          }
-        }
-      }
-
-      const option = {
+      document.getElementById('barChart').style.display = 'block';
+      document.getElementById('pieChart').style.display = 'none';
+      const data = Object.entries(investorData).map(([name, portfolio]) => {
+        const found = portfolio.find(p => p.stock === stock);
+        return found ? { name, value: found.percent } : null;
+      }).filter(Boolean);
+      const chart = echarts.init(document.getElementById('barChart'));
+      chart.setOption({
         title: {
-          text: `${stock} 持股占比`,
-          left: 'center'
+          text: `${stock} 各投資人持股比例`, left: 'center',
+          textStyle: { color: '#f8fafc', fontSize: 18 }
         },
-        tooltip: {
-          trigger: 'item'
+        grid: { containLabel: true },
+        tooltip: {},
+        xAxis: {
+          type: 'category', data: data.map(d => d.name),
+          axisLabel: { color: '#f8fafc' },
+          axisTick: { alignWithLabel: true }
         },
-        legend: {
-          orient: 'vertical',
-          left: 'left'
+        yAxis: {
+          type: 'value', axisLabel: { color: '#f8fafc' }
         },
-        series: [
-          {
-            name: '持股占比',
-            type: 'pie',
-            radius: '50%',
-            data: data,
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            }
-          }
-        ]
-      };
-
-      myChart.setOption(option);
-      showTab('chart');
+        series: [{
+          type: 'bar', data: data.map(d => d.value),
+          itemStyle: { color: '#38bdf8' }
+        }]
+      });
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('chartPanel').style.display = 'block';
+      chart.resize();
     }
 
-    fetch(sheetUrl)
+    function closeChart() {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('chartPanel').style.display = 'none';
+    }
+
+    function generateInvestorReport() {
+      const container = document.getElementById("investors");
+      container.innerHTML = '';
+      const results = [];
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        let html = `<h2><span class="investor-name" onclick="showPieChart('${name}')">${name}</span></h2><div class="table-wrapper"><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+        for (const { stock, percent } of portfolio) {
+          const p = priceData[stock];
+          if (p) {
+            const roi = ((p.current - p.init) / p.init) * 100;
+            totalROI += roi * (percent / 100);
+            html += `<tr><td class="stock-name" onclick="showBarChart('${stock}')">${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+          } else {
+            html += `<tr><td>${stock}</td><td colspan="4">無價格資料</td></tr>`;
+          }
+        }
+        html += `</tbody><tfoot><tr><td colspan="4"><strong>總報酬率</strong></td><td class="${totalROI >= 0 ? 'positive' : 'negative'}"><strong>${totalROI.toFixed(2)}%</strong></td></tr></tfoot></table></div>`;
+        container.innerHTML += html;
+        results.push({ name, roi: totalROI });
+      }
+      generateInvestorRanking(results);
+    }
+
+    function generateStockPerformance() {
+      const stockReturns = {};
+      for (const stock in priceData) {
+        const p = priceData[stock];
+        if (p.init > 0) {
+          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
+        }
+      }
+      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
+      const container = document.getElementById("stocks");
+      container.innerHTML = `<h2>各股績效排名</h2><div class="table-wrapper"><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(([stock, roi]) => `<tr><td class="stock-name" onclick="showBarChart('${stock}')">${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table></div>';
+    }
+
+    function generateInvestorRanking(rankingData) {
+      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
+      const container = document.getElementById("ranking");
+      container.innerHTML = `<h2>投資人總報酬率排名</h2><div class="table-wrapper"><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(({ name, roi }) => `<tr><td class="investor-name" onclick="showPieChart('${name}')">${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table></div>';
+    }
+
+    fetch(priceDataUrl)
       .then(response => response.text())
       .then(csv => {
-        investorData = parseCSV(csv);
-
-        fetch(priceDataUrl)
-          .then(response => response.text())
-          .then(csv => {
-            priceData = parsePriceCSV(csv);
-            generateInvestorReport();
-            generateStockRanking();
-          });
+        priceData = parseCSV(csv);
+        generateInvestorReport();
+        generateStockPerformance();
       });
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tabContent => tabContent.classList.remove('active'));
+      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    }
+
+    window.addEventListener('resize', function() {
+      const pieChart = echarts.getInstanceByDom(document.getElementById('pieChart'));
+      if (pieChart) pieChart.resize();
+      const barChart = echarts.getInstanceByDom(document.getElementById('barChart'));
+      if (barChart) barChart.resize();
+    });
   </script>
 </body>
 </html>
