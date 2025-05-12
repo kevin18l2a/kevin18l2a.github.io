@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -17,17 +15,23 @@
       margin-bottom: 20px;
     }
     .tab {
-      margin-right: 10px;
       padding: 10px 20px;
-      background: #1e293b;
-      color: #38bdf8;
+      background-color: #334155;
+      margin-right: 10px;
       border-radius: 8px;
       cursor: pointer;
+      color: #f8fafc;
     }
     .tab.active {
-      background: #38bdf8;
+      background-color: #38bdf8;
       color: #0f172a;
       font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
     table {
       width: 100%;
@@ -60,53 +64,40 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
-    #panel {
-      position: fixed;
-      top: 50px;
-      right: 20px;
-      width: 400px;
-      background: #1e293b;
+    .investor-panel {
+      display: none;
+      margin-top: 20px;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-      z-index: 999;
-      display: none;
+      background-color: #334155;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-    .panel-close {
-      cursor: pointer;
-      text-align: right;
-      color: #f87171;
-      font-weight: bold;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    .investor:hover {
+      color: #38bdf8;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>📈 投資人投報率報表</h1>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('investor')">各投資人明細</div>
-    <div class="tab" onclick="switchTab('stock')">個股績效排名</div>
-    <div class="tab" onclick="switchTab('ranking')">投資人總績效排名</div>
+    <div class="tab active" onclick="switchTab('investors')">各投資人明細</div>
+    <div class="tab" onclick="switchTab('stocks')">各股績效排名</div>
+    <div class="tab" onclick="switchTab('ranking')">投資人績效排名</div>
   </div>
 
-  <div id="content"></div>
+  <div id="investors" class="tab-content active"></div>
+  <div id="stocks" class="tab-content"></div>
+  <div id="ranking" class="tab-content"></div>
 
-  <div id="panel" class="panel">
-    <div class="panel-close" onclick="document.getElementById('panel').style.display='none'">✖</div>
-    <canvas id="pieChart"></canvas>
+  <div id="investor-panel" class="investor-panel">
+    <h2>投資人投資組合</h2>
+    <canvas id="pie-chart"></canvas>
   </div>
 
   <script>
+    let priceData = {};
+
     const investorData = {
       "豪": [
         { percent: 30, stock: "PLTR" },
@@ -153,130 +144,138 @@
 
     const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
 
-    let priceData = {};
-    let pieChartInstance = null;
-
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
       const data = {};
       for (let i = 1; i < lines.length; i++) {
-        const [stock, initStr, currentStr] = lines[i].split(',');
-        data[stock.trim()] = {
-          init: parseFloat(initStr),
-          current: parseFloat(currentStr)
-        };
+        const row = lines[i].split(',');
+        const stock = row[0].trim();
+        const price_init = parseFloat(row[1]);
+        const price_current = parseFloat(row[2]);
+        data[stock] = { init: price_init, current: price_current };
       }
       return data;
     }
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
-
-      if (tab === 'investor') renderInvestorDetail();
-      if (tab === 'stock') renderStockRanking();
-      if (tab === 'ranking') renderInvestorRanking();
-    }
-
-    function renderInvestorDetail() {
-      const container = document.getElementById("content");
+    function generateInvestorReport() {
+      const container = document.getElementById("investors");
       container.innerHTML = '';
+      const results = [];
 
       for (const [name, portfolio] of Object.entries(investorData)) {
         let totalROI = 0;
-        let html = `<h2 onclick="showPieChart('${name}', ${JSON.stringify(portfolio)})">${name}</h2>
-          <table><thead><tr>
-            <th>股票代號</th><th>初始價格</th><th>目前價格</th>
-            <th>投資比例 (%)</th><th>報酬率 (%)</th>
-          </tr></thead><tbody>`;
+        let html = `<h2 class="investor" onmouseover="highlightInvestor(event)" onmouseout="resetInvestor(event)" onclick="showInvestorPanel('${name}')">${name}</h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
 
-        for (const item of portfolio) {
-          const p = priceData[item.stock];
+        for (const { stock, percent } of portfolio) {
+          const p = priceData[stock];
           if (p) {
             const roi = ((p.current - p.init) / p.init) * 100;
-            totalROI += roi * (item.percent / 100);
-            const roiClass = roi >= 0 ? 'positive' : 'negative';
-            html += `<tr>
-              <td>${item.stock}</td>
-              <td>${p.init.toFixed(2)}</td>
-              <td>${p.current.toFixed(2)}</td>
-              <td>${item.percent}</td>
-              <td class="${roiClass}">${roi.toFixed(2)}%</td>
-            </tr>`;
+            totalROI += roi * (percent / 100);
+            html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+          } else {
+            html += `<tr><td>${stock}</td><td colspan="4">無價格資料</td></tr>`;
           }
         }
 
-        const roiClass = totalROI >= 0 ? 'positive' : 'negative';
-        html += `</tbody><tfoot><tr>
-            <td colspan="4"><strong>總報酬率</strong></td>
-            <td class="${roiClass}"><strong>${totalROI.toFixed(2)}%</strong></td>
-          </tr></tfoot></table>`;
-
+        html += `</tbody><tfoot><tr><td colspan="4"><strong>總報酬率</strong></td><td class="${totalROI >= 0 ? 'positive' : 'negative'}"><strong>${totalROI.toFixed(2)}%</strong></td></tr></tfoot></table>`;
         container.innerHTML += html;
+        results.push({ name, roi: totalROI });
       }
+
+      // 存到 ranking tab
+      generateInvestorRanking(results);
     }
 
-    function showPieChart(name, pieData) {
-      const container = document.getElementById("panel");
-      const labels = pieData.map(item => item.stock);
-      const data = pieData.map(item => item.percent);
+    function showInvestorPanel(investorName) {
+      const portfolio = investorData[investorName];
+      const canvas = document.getElementById('pie-chart');
+      const ctx = canvas.getContext('2d');
+      
+      const labels = portfolio.map(item => item.stock);
+      const data = portfolio.map(item => item.percent);
 
-      if (pieChartInstance) {
-        pieChartInstance.destroy();
-      }
-
-      pieChartInstance = new Chart(document.getElementById("pieChart"), {
+      new Chart(ctx, {
         type: 'pie',
         data: {
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ['#38bdf8', '#4ade80', '#f87171', '#fbbf24', '#9333ea', '#e11d48'],
-            borderColor: '#1e293b',
-            borderWidth: 2
+            backgroundColor: ['#38bdf8', '#4ade80', '#f87171', '#fbbf24', '#f97316', '#9333ea'],
           }]
         },
         options: {
+          responsive: true,
           plugins: {
-            datalabels: {
-              formatter: (value, context) => `${context.chart.data.labels[context.dataIndex]}: ${value}%`,
-              color: '#fff',
-              font: { weight: 'bold' }
-            }
-          },
-          hover: {
-            onHover: function(event, chartElement) {
-              if (chartElement.length) {
-                chartElement[0]._model.backgroundColor = '#fbbf24';
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return tooltipItem.label + ': ' + tooltipItem.raw + '%';
+                }
               }
             }
           }
         }
       });
 
-      container.style.display = 'block';
+      document.getElementById('investor-panel').style.display = 'block';
     }
 
-    function renderStockRanking() {
-      const container = document.getElementById("content");
-      container.innerHTML = "<h2>個股績效排名</h2>";
+    function highlightInvestor(event) {
+      event.target.style.color = '#38bdf8';
     }
 
-    function renderInvestorRanking() {
-      const container = document.getElementById("content");
-      container.innerHTML = "<h2>投資人總績效排名</h2>";
+    function resetInvestor(event) {
+      event.target.style.color = '#f8fafc';
     }
 
-    function fetchStockPriceData() {
-      fetch(priceDataUrl)
-        .then(response => response.text())
-        .then(data => {
-          priceData = parseCSV(data);
-          renderInvestorDetail();
-        });
+    function generateStockPerformance() {
+      const stockReturns = {};
+
+      for (const stock in priceData) {
+        const p = priceData[stock];
+        if (p.init > 0) {
+          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
+        }
+      }
+
+      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
+      const container = document.getElementById("stocks");
+      container.innerHTML = `<h2>各股績效排名</h2><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(([stock, roi]) => `<tr><td>${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table>';
     }
 
-    fetchStockPriceData();
+    function generateInvestorRanking(rankingData) {
+      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
+      const container = document.getElementById("ranking");
+      container.innerHTML = `<h2>投資人總報酬率排名</h2><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(({ name, roi }) => `<tr><td>${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.tab[onclick*='${id}']`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+
+      if (id === 'stocks') generateStockPerformance();
+      if (id === 'ranking') generateInvestorRanking();
+    }
+
+    fetch(priceDataUrl)
+      .then(response => response.text())
+      .then(csvText => {
+        priceData = parseCSV(csvText);
+        generateInvestorReport();
+      })
+      .catch(error => {
+        document.getElementById("investors").innerText = '載入資料時發生錯誤：' + error;
+        console.error('Error fetching price data:', error);
+      });
   </script>
 </body>
 </html>
