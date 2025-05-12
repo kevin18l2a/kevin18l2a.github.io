@@ -10,23 +10,23 @@
       background: #0f172a;
       color: #f8fafc;
       padding: 20px;
-      font-size: 18px; /* 增大字體大小 */
+      font-size: 18px; /* 增加預設字體大小 */
     }
     .tabs {
       display: flex;
       margin-bottom: 20px;
-      flex-wrap: wrap; /* 使標籤能換行 */
+      flex-wrap: wrap;
     }
     .tab {
-      padding: 15px 25px; /* 增大標籤的內邊距 */
+      padding: 12px 24px; /* 增加標籤內部的間距 */
       background-color: #334155;
-      margin-right: 10px;
-      margin-bottom: 10px; /* 增加間距以防標籤擠在一起 */
+      margin-right: 12px;
+      margin-bottom: 12px;
       border-radius: 8px;
       cursor: pointer;
       color: #f8fafc;
       text-align: center;
-      font-size: 18px; /* 增大標籤字體 */
+      font-size: 20px; /* 增加標籤字體大小 */
     }
     .tab.active {
       background-color: #38bdf8;
@@ -47,11 +47,11 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      font-size: 18px; /* 增大表格字體 */
     }
     th, td {
-      padding: 15px 20px; /* 增大表格內部邊距 */
+      padding: 18px 20px; /* 增加表格內部的間距 */
       text-align: center;
+      font-size: 18px; /* 增加表格字體大小 */
     }
     th {
       background-color: #334155;
@@ -60,17 +60,11 @@
     tr:nth-child(even) td {
       background-color: #273549;
     }
-    .positive {
-      color: #4ade80;
-    }
-    .negative {
-      color: #f87171;
-    }
     h2 {
       border-bottom: 1px solid #38bdf8;
-      padding-bottom: 8px;
+      padding-bottom: 10px;
       margin-top: 40px;
-      font-size: 24px; /* 增大標題字體 */
+      font-size: 24px; /* 增加標題字體大小 */
     }
     .investor-name:hover, .stock-name:hover {
       color: #facc15;
@@ -82,14 +76,14 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 20px;
+      padding: 15px;
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: none;
-      width: 90vw; /* 使圖表面板寬度適應小屏幕 */
+      width: 90vw;
       max-width: 800px;
-      height: 80vh; /* 調整高度 */
+      height: 80vh;
       max-height: 600px;
     }
     #closeChartBtn {
@@ -99,10 +93,10 @@
       background: #334155;
       color: #f8fafc;
       border: none;
-      padding: 12px 16px; /* 增大按鈕邊距 */
+      padding: 12px 16px; /* 增加關閉按鈕的內邊距 */
       border-radius: 8px;
       cursor: pointer;
-      font-size: 18px; /* 增大按鈕字體 */
+      font-size: 18px;
     }
     #overlay {
       position: fixed;
@@ -119,36 +113,35 @@
       height: 100%;
     }
   
-    /* 媒體查詢：針對小螢幕設備 (例如手機) 調整樣式 */
     @media (max-width: 600px) {
       body {
-        font-size: 16px; /* 稍微縮小字體大小 */
-        padding: 15px; /* 減少邊距 */
+        font-size: 16px; /* 增加手機版字體 */
+        padding: 15px;
       }
       .tabs {
-        flex-direction: column; /* 標籤縱向排列 */
+        flex-direction: column;
       }
       .tab {
         margin-right: 0;
-        margin-bottom: 12px; /* 每個標籤之間有更多空間 */
+        margin-bottom: 12px;
+        font-size: 22px; /* 手機版標籤字體增大 */
       }
       table {
-        font-size: 16px; /* 減小表格字體 */
+        font-size: 16px; /* 手機版表格字體 */
       }
       th, td {
-        padding: 10px 12px; /* 減少表格內部邊距 */
+        padding: 10px 12px; /* 手機版表格內部邊距 */
       }
       h2 {
-        font-size: 20px; /* 減小標題字體 */
+        font-size: 26px; /* 手機版標題字體 */
       }
       #chartPanel {
-        width: 90vw; /* 圖表面板調整為90%寬度 */
-        max-width: none; /* 移除最大寬度限制 */
-        height: 70vh; /* 讓高度更適合小螢幕 */
+        width: 90vw;
+        max-width: none;
+        height: 70vh;
       }
     }
   </style>
-  
   
 </head>
 <body>
@@ -199,12 +192,12 @@
       chart.setOption({
         title: {
           text: `${name} 投資組合`, left: 'center', top: 'center',
-          textStyle: { color: '#f8fafc', fontSize: 18 }
+          textStyle: { color: '#f8fafc', fontSize: 28 } /* 調整字體大小 */
         },
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
         series: [{
           type: 'pie', radius: ['40%', '70%'],
-          label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc' },
+          label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc', fontSize: 18 }, /* 調整字體大小 */
           data
         }]
       });
@@ -224,17 +217,17 @@
       chart.setOption({
         title: {
           text: `${stock} 各投資人持股比例`, left: 'center',
-          textStyle: { color: '#f8fafc', fontSize: 18 }
+          textStyle: { color: '#f8fafc', fontSize: 28 } /* 調整字體大小 */
         },
         grid: { containLabel: true },
         tooltip: {},
         xAxis: {
           type: 'category', data: data.map(d => d.name),
-          axisLabel: { color: '#f8fafc' },
+          axisLabel: { color: '#f8fafc', fontSize: 18 }, /* 調整字體大小 */
           axisTick: { alignWithLabel: true }
         },
         yAxis: {
-          type: 'value', axisLabel: { color: '#f8fafc' }
+          type: 'value', axisLabel: { color: '#f8fafc', fontSize: 18 } /* 調整字體大小 */
         },
         series: [{
           type: 'bar', data: data.map(d => d.value),
@@ -275,50 +268,37 @@
       generateInvestorRanking(results);
     }
 
-    function generateStockPerformance() {
-      const stockReturns = {};
-      for (const stock in priceData) {
-        const p = priceData[stock];
-        if (p.init > 0) {
-          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
-        }
-      }
-      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
-      const container = document.getElementById("stocks");
-      container.innerHTML = `<h2>各股績效排名</h2><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(([stock, roi]) => `<tr><td class="stock-name" onclick="showBarChart('${stock}')">${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
+    function generateInvestorRanking(results) {
+      const container = document.getElementById('ranking');
+      container.innerHTML = '<h2>投資人績效排名</h2>';
+      results.sort((a, b) => b.roi - a.roi);
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>投資人名稱</th>
+            <th>總報酬率</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results.map(result => `
+            <tr>
+              <td>${result.name}</td>
+              <td class="${result.roi >= 0 ? 'positive' : 'negative'}">${result.roi.toFixed(2)}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+      container.appendChild(table);
     }
 
-    function generateInvestorRanking(rankingData) {
-      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
-      const container = document.getElementById("ranking");
-      container.innerHTML = `<h2>投資人總報酬率排名</h2><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(({ name, roi }) => `<tr><td class="investor-name" onclick="showPieChart('${name}')">${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
-    }
-
+    // 初始化頁面
     fetch(priceDataUrl)
       .then(response => response.text())
       .then(csv => {
         priceData = parseCSV(csv);
         generateInvestorReport();
-        generateStockPerformance();
       });
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tabContent => tabContent.classList.remove('active'));
-      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
-      document.getElementById(tabName).classList.add('active');
-    }
-
-    window.addEventListener('resize', function() {
-      const pieChart = echarts.getInstanceByDom(document.getElementById('pieChart'));
-      if (pieChart) pieChart.resize();
-      const barChart = echarts.getInstanceByDom(document.getElementById('barChart'));
-      if (barChart) barChart.resize();
-    });
   </script>
 </body>
 </html>
