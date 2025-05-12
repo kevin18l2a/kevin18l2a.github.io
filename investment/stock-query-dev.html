@@ -10,7 +10,7 @@
       background: #0f172a;
       color: #f8fafc;
       padding: 20px;
-      font-size: 18px; /* 增加預設字體大小 */
+      font-size: 20px; /* 增加預設字體大小 */
     }
     .tabs {
       display: flex;
@@ -18,15 +18,15 @@
       flex-wrap: wrap;
     }
     .tab {
-      padding: 12px 24px; /* 增加標籤內部的間距 */
+      padding: 14px 28px; /* 增加標籤內部的間距 */
       background-color: #334155;
-      margin-right: 12px;
-      margin-bottom: 12px;
+      margin-right: 14px;
+      margin-bottom: 14px;
       border-radius: 8px;
       cursor: pointer;
       color: #f8fafc;
       text-align: center;
-      font-size: 20px; /* 增加標籤字體大小 */
+      font-size: 24px; /* 增加標籤字體大小 */
     }
     .tab.active {
       background-color: #38bdf8;
@@ -49,9 +49,9 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     th, td {
-      padding: 18px 20px; /* 增加表格內部的間距 */
+      padding: 20px 22px; /* 增加表格內部的間距 */
       text-align: center;
-      font-size: 18px; /* 增加表格字體大小 */
+      font-size: 20px; /* 增加表格字體大小 */
     }
     th {
       background-color: #334155;
@@ -62,9 +62,9 @@
     }
     h2 {
       border-bottom: 1px solid #38bdf8;
-      padding-bottom: 10px;
+      padding-bottom: 12px;
       margin-top: 40px;
-      font-size: 24px; /* 增加標題字體大小 */
+      font-size: 28px; /* 增加標題字體大小 */
     }
     .investor-name:hover, .stock-name:hover {
       color: #facc15;
@@ -76,7 +76,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 15px;
+      padding: 20px;
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
@@ -88,15 +88,15 @@
     }
     #closeChartBtn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 12px;
+      right: 12px;
       background: #334155;
       color: #f8fafc;
       border: none;
-      padding: 12px 16px; /* 增加關閉按鈕的內邊距 */
+      padding: 14px 18px; /* 增加關閉按鈕的內邊距 */
       border-radius: 8px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 20px;
     }
     #overlay {
       position: fixed;
@@ -115,7 +115,7 @@
   
     @media (max-width: 600px) {
       body {
-        font-size: 16px; /* 增加手機版字體 */
+        font-size: 22px; /* 增加手機版字體 */
         padding: 15px;
       }
       .tabs {
@@ -123,17 +123,17 @@
       }
       .tab {
         margin-right: 0;
-        margin-bottom: 12px;
-        font-size: 22px; /* 手機版標籤字體增大 */
+        margin-bottom: 14px;
+        font-size: 26px; /* 手機版標籤字體增大 */
       }
       table {
-        font-size: 16px; /* 手機版表格字體 */
+        font-size: 20px; /* 手機版表格字體 */
       }
       th, td {
-        padding: 10px 12px; /* 手機版表格內部邊距 */
+        padding: 14px 16px; /* 手機版表格內部邊距 */
       }
       h2 {
-        font-size: 26px; /* 手機版標題字體 */
+        font-size: 30px; /* 手機版標題字體 */
       }
       #chartPanel {
         width: 90vw;
@@ -192,12 +192,12 @@
       chart.setOption({
         title: {
           text: `${name} 投資組合`, left: 'center', top: 'center',
-          textStyle: { color: '#f8fafc', fontSize: 28 } /* 調整字體大小 */
+          textStyle: { color: '#f8fafc', fontSize: 36 } /* 調整字體大小 */
         },
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
         series: [{
           type: 'pie', radius: ['40%', '70%'],
-          label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc', fontSize: 18 }, /* 調整字體大小 */
+          label: { show: true, position: 'inside', formatter: '{b}\n{d}%', color: '#f8fafc', fontSize: 22 }, /* 調整字體大小 */
           data
         }]
       });
@@ -217,17 +217,17 @@
       chart.setOption({
         title: {
           text: `${stock} 各投資人持股比例`, left: 'center',
-          textStyle: { color: '#f8fafc', fontSize: 28 } /* 調整字體大小 */
+          textStyle: { color: '#f8fafc', fontSize: 36 } /* 調整字體大小 */
         },
         grid: { containLabel: true },
         tooltip: {},
         xAxis: {
           type: 'category', data: data.map(d => d.name),
-          axisLabel: { color: '#f8fafc', fontSize: 18 }, /* 調整字體大小 */
+          axisLabel: { color: '#f8fafc', fontSize: 22 }, /* 調整字體大小 */
           axisTick: { alignWithLabel: true }
         },
         yAxis: {
-          type: 'value', axisLabel: { color: '#f8fafc', fontSize: 18 } /* 調整字體大小 */
+          type: 'value', axisLabel: { color: '#f8fafc', fontSize: 22 } /* 調整字體大小 */
         },
         series: [{
           type: 'bar', data: data.map(d => d.value),
