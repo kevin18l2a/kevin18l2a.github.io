@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -86,9 +86,9 @@
       width: 600px;
       height: 600px;
     }
-    #chartPanel canvas {
-      width: 100% !important;
-      height: 100% !important;
+    #pieChart {
+      width: 100%;
+      height: 100%;
     }
     #closeChartBtn {
       background: #334155;
@@ -128,13 +128,12 @@
 
   <div id="overlay" onclick="closeChart()"></div>
   <div id="chartPanel">
-    <canvas id="pieChart"></canvas>
+    <div id="pieChart"></div>
     <button id="closeChartBtn" onclick="closeChart()">關閉</button>
   </div>
 
   <script>
     let priceData = {};
-    let chartInstance;
 
     const investorData = {
       "豪": [
@@ -197,52 +196,116 @@
 
     function showPieChart(name) {
       const portfolio = investorData[name];
-      const labels = portfolio.map(item => `${item.stock} (${item.percent}%)`);
-      const data = portfolio.map(item => item.percent);
-      const colors = portfolio.map((_, i) => `hsl(${i * 360 / portfolio.length}, 70%, 60%)`);
+      const data = portfolio.map(item => ({
+        name: item.stock,
+        value: item.percent
+      }));
 
-      const ctx = document.getElementById('pieChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: colors,
-            borderColor: '#0f172a',
-            borderWidth: 2
-          }]
+      const chartDom = document.getElementById('pieChart');
+      const myChart = echarts.init(chartDom);
+
+      const option = {
+        title: {
+          text: `${name} 的投資組合比例`,
+          left: 'center',
+          textStyle: { color: '#f8fafc' }
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#f8fafc' } },
-            title: {
-              display: true,
-              text: `${name} 的投資組合比例`,
-              color: '#f8fafc',
-              font: { size: 18 }
+        tooltip: { trigger: 'item' },
+        legend: {
+          bottom: 10,
+          left: 'center',
+          textStyle: { color: '#f8fafc' }
+        },
+        series: [{
+          name: '投資組合',
+          type: 'pie',
+          radius: '60%',
+          data,
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
             }
+          },
+          label: {
+            color: '#f8fafc'
           }
-        }
-      });
+        }]
+      };
 
+      myChart.setOption(option);
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
-      document.body.style.overflow = 'hidden';
     }
 
     function closeChart() {
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('chartPanel').style.display = 'none';
-      document.body.style.overflow = 'auto';
     }
 
-    function generateInvestorReport() { /* ... unchanged ... */ }
-    function generateStockPerformance() { /* ... unchanged ... */ }
-    function generateInvestorRanking(rankingData) { /* ... unchanged ... */ }
-    function switchTab(id) { /* ... unchanged ... */ }
+    function generateInvestorReport() {
+      const container = document.getElementById("investors");
+      container.innerHTML = '';
+      const results = [];
+
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        let html = `<h2><span class="investor-name" onclick="showPieChart('${name}')">${name}</span></h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>投資比例 (%)</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+
+        for (const { stock, percent } of portfolio) {
+          const p = priceData[stock];
+          if (p) {
+            const roi = ((p.current - p.init) / p.init) * 100;
+            totalROI += roi * (percent / 100);
+            html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+          } else {
+            html += `<tr><td>${stock}</td><td colspan="4">無價格資料</td></tr>`;
+          }
+        }
+
+        html += `</tbody><tfoot><tr><td colspan="4"><strong>總報酬率</strong></td><td class="${totalROI >= 0 ? 'positive' : 'negative'}"><strong>${totalROI.toFixed(2)}%</strong></td></tr></tfoot></table>`;
+        container.innerHTML += html;
+        results.push({ name, roi: totalROI });
+      }
+
+      generateInvestorRanking(results);
+    }
+
+    function generateStockPerformance() {
+      const stockReturns = {};
+
+      for (const stock in priceData) {
+        const p = priceData[stock];
+        if (p.init > 0) {
+          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
+        }
+      }
+
+      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
+      const container = document.getElementById("stocks");
+      container.innerHTML = `<h2>各股績效排名</h2><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(([stock, roi]) => `<tr><td>${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    function generateInvestorRanking(rankingData) {
+      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
+      const container = document.getElementById("ranking");
+      container.innerHTML = `<h2>投資人總報酬率排名</h2><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
+        sorted.map(({ name, roi }) => `<tr><td>${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.tab[onclick*='${id}']`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+
+      if (id === 'stocks') generateStockPerformance();
+      if (id === 'ranking') generateInvestorRanking();
+    }
 
     fetch(priceDataUrl)
       .then(response => response.text())
