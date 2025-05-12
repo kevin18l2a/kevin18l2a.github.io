@@ -65,12 +65,9 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
-    .investor-name, .stock-name {
-      cursor: pointer;
-      display: inline-block;
-    }
     .investor-name:hover, .stock-name:hover {
       color: #facc15;
+      cursor: pointer;
     }
     #chartPanel {
       position: fixed;
@@ -141,6 +138,7 @@
       "草": [ { percent: 30, stock: "2330" }, { percent: 20, stock: "NVDA" }, { percent: 10, stock: "2618" }, { percent: 15, stock: "PLTR" }, { percent: 10, stock: "TSLA" }, { percent: 15, stock: "AAPL" } ]
     };
     const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
+
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
       const data = {};
@@ -153,6 +151,7 @@
       }
       return data;
     }
+
     function showPieChart(name) {
       document.getElementById('pieChart').style.display = 'block';
       document.getElementById('barChart').style.display = 'none';
@@ -174,6 +173,7 @@
       document.getElementById('chartPanel').style.display = 'block';
       chart.resize();
     }
+
     function showBarChart(stock) {
       document.getElementById('barChart').style.display = 'block';
       document.getElementById('pieChart').style.display = 'none';
@@ -206,10 +206,12 @@
       document.getElementById('chartPanel').style.display = 'block';
       chart.resize();
     }
+
     function closeChart() {
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('chartPanel').style.display = 'none';
     }
+
     function generateInvestorReport() {
       const container = document.getElementById("investors");
       container.innerHTML = '';
@@ -233,6 +235,7 @@
       }
       generateInvestorRanking(results);
     }
+
     function generateStockPerformance() {
       const stockReturns = {};
       for (const stock in priceData) {
@@ -247,6 +250,7 @@
         sorted.map(([stock, roi]) => `<tr><td class="stock-name" onclick="showBarChart('${stock}')">${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
         '</tbody></table>';
     }
+
     function generateInvestorRanking(rankingData) {
       const sorted = rankingData.sort((a, b) => b.roi - a.roi);
       const container = document.getElementById("ranking");
@@ -254,6 +258,7 @@
         sorted.map(({ name, roi }) => `<tr><td class="investor-name" onclick="showPieChart('${name}')">${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
         '</tbody></table>';
     }
+
     fetch(priceDataUrl)
       .then(response => response.text())
       .then(csv => {
@@ -261,12 +266,14 @@
         generateInvestorReport();
         generateStockPerformance();
       });
+
     function switchTab(tabName) {
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(tabContent => tabContent.classList.remove('active'));
       document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
       document.getElementById(tabName).classList.add('active');
     }
+
     window.addEventListener('resize', function() {
       const pieChart = echarts.getInstanceByDom(document.getElementById('pieChart'));
       if (pieChart) pieChart.resize();
