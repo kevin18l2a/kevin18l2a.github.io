@@ -240,7 +240,11 @@
       };
 
       myChart.setOption(option);
-      window.addEventListener('resize', () => myChart.resize());
+
+      // 監聽 resize 事件，讓圖表在面板大小變化時自動調整
+      window.addEventListener('resize', function() {
+        myChart.resize();
+      });
 
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
@@ -316,14 +320,11 @@
 
     fetch(priceDataUrl)
       .then(response => response.text())
-      .then(csvText => {
-        priceData = parseCSV(csvText);
+      .then(csv => {
+        priceData = parseCSV(csv);
         generateInvestorReport();
       })
-      .catch(error => {
-        document.getElementById("investors").innerText = '載入資料時發生錯誤：' + error;
-        console.error('Error fetching price data:', error);
-      });
+      .catch(error => console.error('Error fetching price data:', error));
   </script>
 </body>
 </html>
