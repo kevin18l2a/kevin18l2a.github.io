@@ -257,6 +257,16 @@
       container.style.display = 'block';
     }
 
+    function renderStockRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = "<h2>個股績效排名</h2>";
+    }
+
+    function renderInvestorRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = "<h2>投資人總績效排名</h2>";
+    }
+
     function fetchStockPriceData() {
       fetch(priceDataUrl)
         .then(response => response.text())
