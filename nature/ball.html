@@ -52,8 +52,14 @@
       padding: 5px;
       border-bottom: 1px solid #ccc;
     }
+    #bottomBar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
     #toggleDashboardBtn {
-      margin-top: 10px;
       background-color: #ff5722;
       color: white;
     }
@@ -80,11 +86,13 @@
       <option value="🤔️">🤔️ 彈珠</option>
       <option value="🧐">🧐 彈珠</option>
     </select>
-    <button id="toggleDashboardBtn">收合儀表板</button>
   </div>
 
   <div class="dashboard" id="dashboard"></div>
   <div class="tooltip" id="tooltip"></div>
+  <div id="bottomBar">
+    <button id="toggleDashboardBtn">收合儀表板</button>
+  </div>
   <canvas id="gameCanvas"></canvas>
 
   <script>
@@ -123,6 +131,7 @@
         this.y = y;
         this.size = size;
         this.symbol = symbol;
+        this.originalSymbol = symbol;
         this.velocityX = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
         this.velocityY = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
         this.rotationAngle = 0;
@@ -141,6 +150,14 @@
           this.velocityY *= -1;
         }
 
+        // 移動到中心（碰撞多時）
+        if (this.collisions > 10) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          this.x += (centerX - this.x) * 0.01;
+          this.y += (centerY - this.y) * 0.01;
+        }
+
         // 更新位置
         this.x += this.velocityX;
         this.y += this.velocityY;
@@ -148,7 +165,7 @@
         // 狂暴檢查
         if (this.isInAngryMode && Date.now() - this.angryStartTime > 60000) {
           this.isInAngryMode = false;
-          this.symbol = selectedBall;
+          this.symbol = this.originalSymbol;
         }
 
         this.draw();
@@ -184,14 +201,12 @@
             this.velocityY *= 1.5;
           }
 
-          // 自轉與彈開
           this.rotationAngle += Math.PI / 10;
           const angle = Math.atan2(dy, dx);
           const totalSpeed = Math.sqrt(this.velocityX ** 2 + this.velocityY ** 2);
           this.velocityX = Math.cos(angle) * totalSpeed;
           this.velocityY = Math.sin(angle) * totalSpeed;
 
-          // 分開兩球避免重疊
           const overlap = (this.size + other.size) - dist;
           const offsetX = (dx / dist) * (overlap / 2);
           const offsetY = (dy / dist) * (overlap / 2);
@@ -239,7 +254,7 @@
     function updateDashboard() {
       dashboard.innerHTML = balls.map(ball => `
         <div class="ball-info">
-          彈珠 ${ball.index}｜碰撞：${ball.collisions} 次｜${ball.isInAngryMode ? '😡 狂暴中' : '正常'}
+          彈珠 ${ball.index}（${ball.symbol}）｜碰撞：${ball.collisions} 次｜${ball.isInAngryMode ? '😡 狂暴中' : '正常'}
         </div>
       `).join('');
     }
@@ -256,7 +271,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // 初始彈珠
     addBall(canvas.width / 2, canvas.height / 2);
     gameLoop();
   </script>
