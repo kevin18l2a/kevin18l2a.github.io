@@ -139,30 +139,54 @@
         this.index = balls.length + 1;
         this.isInAngryMode = false;
         this.angryStartTime = null;
+
+        this.isStuckOnEdge = false;
+        this.edgeStartTime = null;
       }
 
       update() {
-        // 邊界檢查與反彈
-        if (this.x - this.size <= 0 || this.x + this.size >= canvas.width) {
-          this.velocityX *= -1;
-        }
-        if (this.y - this.size <= 0 || this.y + this.size >= canvas.height) {
-          this.velocityY *= -1;
+        const onEdge =
+          this.x - this.size <= 0 || this.x + this.size >= canvas.width ||
+          this.y - this.size <= 0 || this.y + this.size >= canvas.height;
+
+        if (onEdge) {
+          if (!this.isStuckOnEdge) {
+            this.isStuckOnEdge = true;
+            this.edgeStartTime = Date.now();
+          }
+        } else {
+          this.isStuckOnEdge = false;
+          this.edgeStartTime = null;
         }
 
-        // 移動到中心（碰撞多時）
+        if (onEdge) {
+          if (this.x - this.size <= 0 || this.x + this.size >= canvas.width) {
+            this.velocityX *= -1;
+          }
+          if (this.y - this.size <= 0 || this.y + this.size >= canvas.height) {
+            this.velocityY *= -1;
+          }
+        }
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        if (this.isStuckOnEdge && this.edgeStartTime) {
+          const elapsed = Date.now() - this.edgeStartTime;
+          if (elapsed > 10000) {
+            this.x += (centerX - this.x) * 0.01;
+            this.y += (centerY - this.y) * 0.01;
+          }
+        }
+
         if (this.collisions > 10) {
-          const centerX = canvas.width / 2;
-          const centerY = canvas.height / 2;
           this.x += (centerX - this.x) * 0.01;
           this.y += (centerY - this.y) * 0.01;
         }
 
-        // 更新位置
         this.x += this.velocityX;
         this.y += this.velocityY;
 
-        // 狂暴檢查
         if (this.isInAngryMode && Date.now() - this.angryStartTime > 60000) {
           this.isInAngryMode = false;
           this.symbol = this.originalSymbol;
