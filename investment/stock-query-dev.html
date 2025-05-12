@@ -10,7 +10,7 @@
       background: #0f172a;
       color: #f8fafc;
       padding: 20px;
-      font-size: 16px; /* 預設字體大小 */
+      font-size: 18px; /* 增大字體大小 */
     }
     .tabs {
       display: flex;
@@ -18,7 +18,7 @@
       flex-wrap: wrap; /* 使標籤能換行 */
     }
     .tab {
-      padding: 10px 20px;
+      padding: 15px 25px; /* 增大標籤的內邊距 */
       background-color: #334155;
       margin-right: 10px;
       margin-bottom: 10px; /* 增加間距以防標籤擠在一起 */
@@ -26,6 +26,7 @@
       cursor: pointer;
       color: #f8fafc;
       text-align: center;
+      font-size: 18px; /* 增大標籤字體 */
     }
     .tab.active {
       background-color: #38bdf8;
@@ -46,9 +47,10 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-size: 18px; /* 增大表格字體 */
     }
     th, td {
-      padding: 12px 15px;
+      padding: 15px 20px; /* 增大表格內部邊距 */
       text-align: center;
     }
     th {
@@ -66,8 +68,9 @@
     }
     h2 {
       border-bottom: 1px solid #38bdf8;
-      padding-bottom: 5px;
+      padding-bottom: 8px;
       margin-top: 40px;
+      font-size: 24px; /* 增大標題字體 */
     }
     .investor-name:hover, .stock-name:hover {
       color: #facc15;
@@ -79,7 +82,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 10px;
+      padding: 20px;
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
@@ -96,9 +99,10 @@
       background: #334155;
       color: #f8fafc;
       border: none;
-      padding: 8px 12px;
+      padding: 12px 16px; /* 增大按鈕邊距 */
       border-radius: 8px;
       cursor: pointer;
+      font-size: 18px; /* 增大按鈕字體 */
     }
     #overlay {
       position: fixed;
@@ -118,7 +122,7 @@
     /* 媒體查詢：針對小螢幕設備 (例如手機) 調整樣式 */
     @media (max-width: 600px) {
       body {
-        font-size: 14px; /* 調整字體大小 */
+        font-size: 16px; /* 稍微縮小字體大小 */
         padding: 15px; /* 減少邊距 */
       }
       .tabs {
@@ -126,16 +130,16 @@
       }
       .tab {
         margin-right: 0;
-        margin-bottom: 10px; /* 每個標籤之間有更多空間 */
+        margin-bottom: 12px; /* 每個標籤之間有更多空間 */
       }
       table {
-        font-size: 12px; /* 減小表格字體 */
+        font-size: 16px; /* 減小表格字體 */
       }
       th, td {
-        padding: 8px 10px; /* 減少表格內部邊距 */
+        padding: 10px 12px; /* 減少表格內部邊距 */
       }
       h2 {
-        font-size: 18px; /* 減小標題字體 */
+        font-size: 20px; /* 減小標題字體 */
       }
       #chartPanel {
         width: 90vw; /* 圖表面板調整為90%寬度 */
@@ -144,6 +148,7 @@
       }
     }
   </style>
+  
   
 </head>
 <body>
