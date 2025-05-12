@@ -67,6 +67,12 @@
       border-bottom: 1px solid #38bdf8;
       padding-bottom: 5px;
       margin-top: 40px;
+      cursor: pointer;
+      transition: transform 0.2s, color 0.2s;
+    }
+    h2:hover {
+      transform: scale(1.02);
+      color: #fbbf24;
     }
     .panel {
       position: fixed;
@@ -201,7 +207,7 @@
       tab1.innerHTML = '';
       for (const [name, portfolio] of Object.entries(investorData)) {
         let total = 0;
-        let html = `<h2 onclick="showPie('${name}')" style="cursor:pointer;">${name}</h2>`;
+        let html = `<h2 onclick="showPie('${name}')">${name}</h2>`;
         html += `<table><thead><tr><th>股票</th><th>初始價</th><th>現價</th><th>比例%</th></tr></thead><tbody>`;
 
         for (const { stock, percent } of portfolio) {
@@ -209,7 +215,7 @@
           if (!p) continue;
           const roi = (p.current - p.init) / p.init * 100;
           total += roi * (percent / 100);
-          html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td></tr>`;
+          html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td class="${p.current >= p.init ? 'positive' : 'negative'}">${p.current.toFixed(2)}</td><td>${percent}</td></tr>`;
 
           if (!stockROI[stock]) stockROI[stock] = { total: 0, count: 0, init: p.init, current: p.current };
           stockROI[stock].total += roi * percent;
@@ -221,7 +227,6 @@
         investorROI.push({ name, roi: total });
       }
 
-      // 股票績效
       let stocks = Object.entries(stockROI).map(([k, v]) => {
         return { stock: k, roi: v.total / v.count, init: v.init, current: v.current };
       }).sort((a, b) => b.roi - a.roi);
@@ -230,7 +235,6 @@
         stocks.map(s => `<tr><td>${s.stock}</td><td>${s.init.toFixed(2)}</td><td>${s.current.toFixed(2)}</td><td class="${s.roi >= 0 ? 'positive' : 'negative'}">${s.roi.toFixed(2)}%</td></tr>`).join('') +
         `</tbody></table>`;
 
-      // 投資人績效排名
       investorROI.sort((a, b) => b.roi - a.roi);
       tab3.innerHTML = `<table><thead><tr><th>投資人</th><th>總報酬率%</th></tr></thead><tbody>` +
         investorROI.map(i => `<tr><td>${i.name}</td><td class="${i.roi >= 0 ? 'positive' : 'negative'}">${i.roi.toFixed(2)}%</td></tr>`).join('') +
