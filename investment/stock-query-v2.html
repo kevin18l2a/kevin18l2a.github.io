@@ -78,15 +78,17 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: #1e293b;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: none;
+      width: 600px;
+      height: 600px;
     }
     #chartPanel canvas {
-      max-width: 400px;
-      max-height: 400px;
+      width: 100% !important;
+      height: 100% !important;
     }
     #closeChartBtn {
       background: #334155;
@@ -95,7 +97,10 @@
       padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     #overlay {
       position: fixed;
