@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.1/dist/echarts.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -83,10 +83,9 @@
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: none;
-      width: 90vw;
-      height: 90vh;
-      max-width: 1000px;
-      max-height: 800px;
+      width: 80vw;
+      max-width: 800px;
+      max-height: 600px;
       box-sizing: border-box;
     }
     #closeChartBtn {
@@ -199,41 +198,49 @@
 
     function showPieChart(name) {
       const portfolio = investorData[name];
-      const svg = d3.select("#pieChart").html(""); // 清空舊的圖表
-
-      // 設置 SVG 容器大小
-      const width = 500;
-      const height = 500;
-      const radius = Math.min(width, height) / 2;
-
-      const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-      const arc = d3.arc().outerRadius(radius - 10).innerRadius(0);
-      const pie = d3.pie().sort(null).value(d => d.value);
-
-      const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+      const chartContainer = document.getElementById('pieChart');
+      const chart = echarts.init(chartContainer);
 
       const data = portfolio.map(item => ({
-        name: item.stock,
-        value: item.percent
+        value: item.percent,
+        name: item.stock
       }));
 
-      const path = g.selectAll(".arc")
-        .data(pie(data))
-        .enter().append("g")
-        .attr("class", "arc");
+      const option = {
+        title: {
+          text: `${name} 投資組合`,
+          left: 'center',
+          top: 'center',
+          textStyle: {
+            color: '#f8fafc',
+            fontSize: 18
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}: {c} ({d}%)'
+        },
+        series: [
+          {
+            name: '投資比例',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: true,
+              position: 'inside',
+              formatter: '{b}\n{d}%',
+              color: '#f8fafc'
+            },
+            labelLine: {
+              show: false
+            },
+            data: data
+          }
+        ]
+      };
 
-      path.append("path")
-        .attr("d", arc)
-        .style("fill", d => color(d.data.name));
-
-      path.append("text")
-        .attr("transform", d => `translate(${arc.centroid(d)})`)
-        .attr("dy", ".35em")
-        .style("text-anchor", "middle")
-        .style("fill", "#f8fafc")
-        .text(d => `${d.data.name} (${d.data.value}%)`);
-
+      chart.setOption(option);
       document.getElementById('overlay').style.display = 'block';
       document.getElementById('chartPanel').style.display = 'block';
     }
