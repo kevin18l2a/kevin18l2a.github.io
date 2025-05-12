@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>彈珠碰撞遊戲</title>
   <style>
     body {
@@ -11,71 +11,52 @@
       overflow: hidden;
       background-color: #f0f0f0;
     }
-
     canvas {
       display: block;
-      background-color: #f0f0f0;
     }
-
     .controls {
       position: absolute;
       top: 20px;
       left: 20px;
       z-index: 10;
-      color: #333;
     }
-
-    .controls button {
-      padding: 10px;
+    .controls button, .controls select {
       margin: 5px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
       cursor: pointer;
+    }
+    .controls button {
       background-color: #4CAF50;
       color: white;
-      border: none;
-      border-radius: 5px;
     }
-
     .controls button:hover {
       background-color: #45a049;
     }
-
-    .controls select {
-      padding: 5px;
-      margin: 5px;
-      font-size: 14px;
-    }
-
     .dashboard {
       position: absolute;
       top: 20px;
       right: 20px;
       z-index: 10;
-      color: #333;
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.9);
       padding: 10px;
       border-radius: 5px;
       max-height: 80%;
       overflow-y: auto;
       font-size: 14px;
     }
-
-    .dashboard .ball-info {
-      margin-bottom: 10px;
+    .ball-info {
+      margin-bottom: 8px;
+      padding: 5px;
+      border-bottom: 1px solid #ccc;
     }
-
-    .dashboard button {
+    #toggleDashboardBtn {
+      margin-top: 10px;
       background-color: #ff5722;
       color: white;
-      border: none;
-      padding: 5px;
-      border-radius: 5px;
-      cursor: pointer;
     }
-
-    .dashboard button:hover {
-      background-color: #e64a19;
-    }
-
     .tooltip {
       position: absolute;
       background: rgba(0, 0, 0, 0.7);
@@ -97,16 +78,13 @@
       <option value="🐰">🐰 彈珠</option>
       <option value="🐣">🐣 彈珠</option>
       <option value="🤔️">🤔️ 彈珠</option>
-      <option value="🧐">🧐 彳珠</option>
+      <option value="🧐">🧐 彈珠</option>
     </select>
-  </div>
-
-  <div class="dashboard" id="dashboard">
     <button id="toggleDashboardBtn">收合儀表板</button>
   </div>
 
+  <div class="dashboard" id="dashboard"></div>
   <div class="tooltip" id="tooltip"></div>
-
   <canvas id="gameCanvas"></canvas>
 
   <script>
@@ -117,96 +95,60 @@
 
     const balls = [];
     let selectedBall = '💩';
-    let tooltip = document.getElementById('tooltip');
+    let dashboardVisible = true;
+    const tooltip = document.getElementById('tooltip');
+    const dashboard = document.getElementById('dashboard');
 
-    // 當前選擇的彈珠
     document.getElementById('ballSelector').addEventListener('change', function () {
       selectedBall = this.value;
     });
 
-    // 重設遊戲
-    document.getElementById('resetBtn').addEventListener('click', resetGame);
-
-    // 新增彈珠按鈕
-    document.getElementById('addBallBtn').addEventListener('click', function() {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      addBall(x, y);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      balls.length = 0;
+      updateDashboard();
     });
 
-    // 儀表板收合/顯示
-    let dashboardVisible = true;
-    document.getElementById('toggleDashboardBtn').addEventListener('click', function() {
+    document.getElementById('addBallBtn').addEventListener('click', () => {
+      addBall(Math.random() * canvas.width, Math.random() * canvas.height);
+    });
+
+    document.getElementById('toggleDashboardBtn').addEventListener('click', () => {
       dashboardVisible = !dashboardVisible;
-      document.getElementById('dashboard').style.display = dashboardVisible ? 'block' : 'none';
+      dashboard.style.display = dashboardVisible ? 'block' : 'none';
     });
 
-    function resetGame() {
-      balls.length = 0; // 清空彈珠
-    }
-
-    // 彈珠類別
     class Ball {
       constructor(x, y, size, symbol) {
         this.x = x;
         this.y = y;
         this.size = size;
-        this.originalSize = size; // 記錄原始大小
         this.symbol = symbol;
-        this.velocityX = Math.random() * 4 + 2; // 隨機初始速度
-        this.velocityY = Math.random() * 4 + 2; // 隨機初始速度
-        this.angle = Math.random() * Math.PI * 2; // 隨機方向
-        this.velocityX = Math.cos(this.angle) * this.velocityX;
-        this.velocityY = Math.sin(this.angle) * this.velocityY;
-        this.acceleration = 1.05; // 每次點擊加速倍數
-        this.minSpeed = 0.5; // 最小速度，防止停下來
-        this.sizeMultiplier = 1; // 大小倍數
-        this.collisions = 0; // 碰撞次數
-        this.isAngry = false; // 狂暴模式
-        this.rotationAngle = 0; // 自轉角度
-        this.angryStartTime = null; // 狂暴模式開始時間
-        this.angryModeDuration = 60000; // 狂暴模式持續一分鐘
-        this.isInAngryMode = false; // 狂暴模式狀態
-        this.originalVelocityX = this.velocityX;
-        this.originalVelocityY = this.velocityY;
-        this.index = balls.length + 1; // 彈珠編號
+        this.velocityX = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
+        this.velocityY = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
+        this.rotationAngle = 0;
+        this.collisions = 0;
+        this.index = balls.length + 1;
+        this.isInAngryMode = false;
+        this.angryStartTime = null;
       }
 
       update() {
-        // 確保彈珠的速度不為0
-        if (Math.abs(this.velocityX) < this.minSpeed) {
-          this.velocityX = Math.sign(this.velocityX) * this.minSpeed;
+        // 邊界檢查與反彈
+        if (this.x - this.size <= 0 || this.x + this.size >= canvas.width) {
+          this.velocityX *= -1;
         }
-        if (Math.abs(this.velocityY) < this.minSpeed) {
-          this.velocityY = Math.sign(this.velocityY) * this.minSpeed;
-        }
-
-        // 狂暴模式: 速度提升兩倍，最多兩倍
-        if (this.isInAngryMode) {
-          this.velocityX = Math.min(this.originalVelocityX * 2, this.velocityX);
-          this.velocityY = Math.min(this.originalVelocityY * 2, this.velocityY);
-          this.symbol = '😡'; // 狂暴模式顯示生氣
+        if (this.y - this.size <= 0 || this.y + this.size >= canvas.height) {
+          this.velocityY *= -1;
         }
 
+        // 更新位置
         this.x += this.velocityX;
         this.y += this.velocityY;
 
-        // 如果碰到邊界反彈
-        if (this.x + this.size > canvas.width || this.x - this.size < 0) {
-          this.velocityX = -this.velocityX;
-          this.x = Math.min(Math.max(this.x, this.size), canvas.width - this.size);
-        }
-        if (this.y + this.size > canvas.height || this.y - this.size < 0) {
-          this.velocityY = -this.velocityY;
-          this.y = Math.min(Math.max(this.y, this.size), canvas.height - this.size);
-        }
-
-        // 如果狂暴模式超過一分鐘，恢復正常
-        if (this.isInAngryMode && Date.now() - this.angryStartTime > this.angryModeDuration) {
+        // 狂暴檢查
+        if (this.isInAngryMode && Date.now() - this.angryStartTime > 60000) {
           this.isInAngryMode = false;
-          this.symbol = '💩'; // 恢復為原來的彈珠樣式
-          this.velocityX = this.originalVelocityX; // 恢復原速度
-          this.velocityY = this.originalVelocityY; // 恢復原速度
+          this.symbol = selectedBall;
         }
 
         this.draw();
@@ -215,8 +157,7 @@
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotationAngle); // 自轉
-
+        ctx.rotate(this.rotationAngle);
         ctx.font = `${this.size}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -224,136 +165,99 @@
         ctx.restore();
       }
 
-      // 加速
       accelerate() {
-        const randomFactor = Math.random() * 2 + 1; // 隨機加速因子
-        this.velocityX *= randomFactor;
-        this.velocityY *= randomFactor;
+        this.velocityX *= 1.5;
+        this.velocityY *= 1.5;
       }
 
-      // 碰撞檢測
-      checkCollision(otherBall) {
-        const dx = this.x - otherBall.x;
-        const dy = this.y - otherBall.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        const collisionDistance = this.size + otherBall.size - 5; // 調整碰撞範圍，使碰撞更靈敏
-        if (distance < collisionDistance) {
-          this.collisions++; // 增加碰撞次數
-
-          // 如果碰撞次數超過 10 次，進入狂暴模式
+      checkCollision(other) {
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < this.size + other.size - 5) {
+          this.collisions++;
           if (this.collisions > 10 && !this.isInAngryMode) {
             this.isInAngryMode = true;
-            this.angryStartTime = Date.now(); // 記錄狂暴模式開始時間
+            this.angryStartTime = Date.now();
+            this.symbol = '😡';
+            this.velocityX *= 1.5;
+            this.velocityY *= 1.5;
           }
 
-          // 自轉特效：在碰撞時優雅地自轉
-          this.rotationAngle += Math.PI / 8; // 每次碰撞時轉動一小段
-
-          // 基本的碰撞反應：簡單交換速度
+          // 自轉與彈開
+          this.rotationAngle += Math.PI / 10;
           const angle = Math.atan2(dy, dx);
-          const targetVx = Math.cos(angle) * Math.abs(this.velocityX);
-          const targetVy = Math.sin(angle) * Math.abs(this.velocityY);
-          this.velocityX = targetVx;
-          this.velocityY = targetVy;
+          const totalSpeed = Math.sqrt(this.velocityX ** 2 + this.velocityY ** 2);
+          this.velocityX = Math.cos(angle) * totalSpeed;
+          this.velocityY = Math.sin(angle) * totalSpeed;
 
-          // 在碰撞後稍微調整彈珠的運動方向和速度
-          this.handleBounce(dx, dy, otherBall);
+          // 分開兩球避免重疊
+          const overlap = (this.size + other.size) - dist;
+          const offsetX = (dx / dist) * (overlap / 2);
+          const offsetY = (dy / dist) * (overlap / 2);
+          this.x += offsetX;
+          this.y += offsetY;
+          other.x -= offsetX;
+          other.y -= offsetY;
         }
-      }
-
-      handleBounce(dx, dy, otherBall) {
-        // 修正位置並確保不會卡住
-        const overlap = this.size + otherBall.size - Math.sqrt(dx * dx + dy * dy);
-        const normalizeX = dx / Math.abs(dx);
-        const normalizeY = dy / Math.abs(dy);
-        this.x += normalizeX * overlap / 2;
-        this.y += normalizeY * overlap / 2;
-        otherBall.x -= normalizeX * overlap / 2;
-        otherBall.y -= normalizeY * overlap / 2;
       }
     }
 
-    // 點擊彈珠加速
-    canvas.addEventListener('click', function (event) {
-      for (let i = 0; i < balls.length; i++) {
-        const ball = balls[i];
-        const dx = event.clientX - ball.x;
-        const dy = event.clientY - ball.y;
+    canvas.addEventListener('click', (e) => {
+      balls.forEach(ball => {
+        const dx = e.clientX - ball.x;
+        const dy = e.clientY - ball.y;
         if (Math.sqrt(dx * dx + dy * dy) < ball.size) {
-          ball.accelerate(); // 加速
+          ball.accelerate();
         }
-      }
+      });
     });
 
-    // 新增彈珠
-    function addBall(x, y) {
-      const ball = new Ball(x, y, 20, selectedBall);
-      balls.push(ball);
-    }
-
-    // 更新遊戲
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      for (let i = 0; i < balls.length; i++) {
-        const ball = balls[i];
-        ball.update();
-        
-        // 檢查每個彈珠與其他彈珠的碰撞
-        for (let j = i + 1; j < balls.length; j++) {
-          const otherBall = balls[j];
-          ball.checkCollision(otherBall);
-        }
-      }
-
-      updateDashboard(); // 更新儀表板
-      requestAnimationFrame(gameLoop);
-    }
-
-    // 更新彈珠儀表板
-    function updateDashboard() {
-      const dashboard = document.getElementById('dashboard');
-      dashboard.innerHTML = `
-        <button id="toggleDashboardBtn">收合儀表板</button>
-      `;
-      
-      balls.forEach((ball, index) => {
-        const ballInfo = document.createElement('div');
-        ballInfo.classList.add('ball-info');
-        ballInfo.innerHTML = `
-          <strong>彈珠 ${ball.index}:</strong><br>
-          速度: (${ball.velocityX.toFixed(2)}, ${ball.velocityY.toFixed(2)})<br>
-          碰撞次數: ${ball.collisions}<br>
-          狂暴模式: ${ball.isInAngryMode ? '是' : '否'}
-        `;
-        dashboard.appendChild(ballInfo);
-      });
-    }
-
-    // 鼠標觸發顯示彈珠編號
-    canvas.addEventListener('mousemove', function(event) {
-      let hoveredBall = null;
-      for (let i = 0; i < balls.length; i++) {
-        const ball = balls[i];
-        const dx = event.clientX - ball.x;
-        const dy = event.clientY - ball.y;
+    canvas.addEventListener('mousemove', (e) => {
+      let found = false;
+      for (const ball of balls) {
+        const dx = e.clientX - ball.x;
+        const dy = e.clientY - ball.y;
         if (Math.sqrt(dx * dx + dy * dy) < ball.size) {
-          hoveredBall = ball;
+          tooltip.innerText = `彈珠 ${ball.index}`;
+          tooltip.style.display = 'block';
+          tooltip.style.left = e.clientX + 10 + 'px';
+          tooltip.style.top = e.clientY + 10 + 'px';
+          found = true;
           break;
         }
       }
-      if (hoveredBall) {
-        tooltip.innerHTML = `彈珠 ${hoveredBall.index}`;
-        tooltip.style.display = 'block';
-        tooltip.style.left = `${event.clientX + 10}px`;
-        tooltip.style.top = `${event.clientY + 10}px`;
-      } else {
-        tooltip.style.display = 'none';
-      }
+      if (!found) tooltip.style.display = 'none';
     });
 
-    // 開始遊戲循環
+    function addBall(x, y) {
+      const newBall = new Ball(x, y, 30, selectedBall);
+      balls.push(newBall);
+      updateDashboard();
+    }
+
+    function updateDashboard() {
+      dashboard.innerHTML = balls.map(ball => `
+        <div class="ball-info">
+          彈珠 ${ball.index}｜碰撞：${ball.collisions} 次｜${ball.isInAngryMode ? '😡 狂暴中' : '正常'}
+        </div>
+      `).join('');
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      balls.forEach((ball, i) => {
+        ball.update();
+        for (let j = i + 1; j < balls.length; j++) {
+          ball.checkCollision(balls[j]);
+        }
+      });
+      updateDashboard();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 初始彈珠
+    addBall(canvas.width / 2, canvas.height / 2);
     gameLoop();
   </script>
 </body>
