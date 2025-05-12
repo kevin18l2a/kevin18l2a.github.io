@@ -10,18 +10,22 @@
       background: #0f172a;
       color: #f8fafc;
       padding: 20px;
+      font-size: 16px; /* 預設字體大小 */
     }
     .tabs {
       display: flex;
       margin-bottom: 20px;
+      flex-wrap: wrap; /* 使標籤能換行 */
     }
     .tab {
       padding: 10px 20px;
       background-color: #334155;
       margin-right: 10px;
+      margin-bottom: 10px; /* 增加間距以防標籤擠在一起 */
       border-radius: 8px;
       cursor: pointer;
       color: #f8fafc;
+      text-align: center;
     }
     .tab.active {
       background-color: #38bdf8;
@@ -80,9 +84,9 @@
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.75);
       z-index: 1000;
       display: none;
-      width: 100vw;
-      height: 100vh;
+      width: 90vw; /* 使圖表面板寬度適應小屏幕 */
       max-width: 800px;
+      height: 80vh; /* 調整高度 */
       max-height: 600px;
     }
     #closeChartBtn {
@@ -110,7 +114,37 @@
       width: 100%;
       height: 100%;
     }
+  
+    /* 媒體查詢：針對小螢幕設備 (例如手機) 調整樣式 */
+    @media (max-width: 600px) {
+      body {
+        font-size: 14px; /* 調整字體大小 */
+        padding: 15px; /* 減少邊距 */
+      }
+      .tabs {
+        flex-direction: column; /* 標籤縱向排列 */
+      }
+      .tab {
+        margin-right: 0;
+        margin-bottom: 10px; /* 每個標籤之間有更多空間 */
+      }
+      table {
+        font-size: 12px; /* 減小表格字體 */
+      }
+      th, td {
+        padding: 8px 10px; /* 減少表格內部邊距 */
+      }
+      h2 {
+        font-size: 18px; /* 減小標題字體 */
+      }
+      #chartPanel {
+        width: 90vw; /* 圖表面板調整為90%寬度 */
+        max-width: none; /* 移除最大寬度限制 */
+        height: 70vh; /* 讓高度更適合小螢幕 */
+      }
+    }
   </style>
+  
 </head>
 <body>
   <h1>📈 投資人投報率報表</h1>
