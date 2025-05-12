@@ -14,29 +14,20 @@
     }
     .tabs {
       display: flex;
-      gap: 10px;
       margin-bottom: 20px;
     }
     .tab {
+      margin-right: 10px;
       padding: 10px 20px;
-      border-radius: 8px;
       background: #1e293b;
-      cursor: pointer;
       color: #38bdf8;
+      border-radius: 8px;
+      cursor: pointer;
     }
     .tab.active {
-      background: #334155;
-    }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: bold;
     }
     table {
       width: 100%;
@@ -68,14 +59,9 @@
       border-bottom: 1px solid #38bdf8;
       padding-bottom: 5px;
       margin-top: 40px;
-      cursor: pointer;
-      transition: transform 0.2s, color 0.2s;
-    }
-    h2:hover {
-      transform: scale(1.02);
-      color: #fbbf24;
     }
     .panel {
+      display: none;
       position: fixed;
       top: 50px;
       right: 20px;
@@ -86,93 +72,250 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
       z-index: 999;
     }
-    .panel canvas {
-      max-width: 100%;
-    }
     .panel-close {
       cursor: pointer;
       text-align: right;
       color: #f87171;
       font-weight: bold;
     }
+    canvas {
+      max-width: 100%;
+    }
   </style>
 </head>
 <body>
   <h1>📈 投資人投報率報表</h1>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('tab1', event)">各投資人明細</div>
-    <div class="tab" onclick="switchTab('tab2', event)">各股績效排名</div>
-    <div class="tab" onclick="switchTab('tab3', event)">投資人總績效排名</div>
+    <div class="tab active" onclick="switchTab('investor')">各投資人明細</div>
+    <div class="tab" onclick="switchTab('stock')">個股績效排名</div>
+    <div class="tab" onclick="switchTab('ranking')">投資人總績效排名</div>
   </div>
 
-  <div id="tab1" class="tab-content active"></div>
-  <div id="tab2" class="tab-content"></div>
-  <div id="tab3" class="tab-content"></div>
+  <div id="content"></div>
 
-  <div id="panel" class="panel" style="display:none;">
+  <div id="panel" class="panel">
     <div class="panel-close" onclick="document.getElementById('panel').style.display='none'">✖</div>
     <canvas id="pieChart"></canvas>
   </div>
 
   <script>
-    const investorData = {};
-    const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
-    let priceData = {};
-    let chart = null;
+    const investorData = {
+      "豪": [
+        { percent: 30, stock: "PLTR" },
+        { percent: 30, stock: "VITL" },
+        { percent: 30, stock: "NVDA" },
+        { percent: 10, stock: "SRFM" }
+      ],
+      "斌": [
+        { percent: 50, stock: "PLTR" },
+        { percent: 20, stock: "TSLA" },
+        { percent: 20, stock: "NVDA" },
+        { percent: 10, stock: "TSM" }
+      ],
+      "嘉琦": [
+        { percent: 20, stock: "PLTR" },
+        { percent: 15, stock: "TSLA" },
+        { percent: 15, stock: "TSM" },
+        { percent: 10, stock: "NFLX" },
+        { percent: 10, stock: "META" },
+        { percent: 10, stock: "NVDA" },
+        { percent: 10, stock: "SOFI" },
+        { percent: 10, stock: "BTC" }
+      ],
+      "老歐": [
+        { percent: 10, stock: "AAPL" },
+        { percent: 5, stock: "BB" },
+        { percent: 5, stock: "NVDA" },
+        { percent: 5, stock: "PLTR" },
+        { percent: 15, stock: "SOUN" },
+        { percent: 20, stock: "TSLA" },
+        { percent: 5, stock: "VITL" },
+        { percent: 20, stock: "VOO" },
+        { percent: 15, stock: "QQQ" }
+      ],
+      "草": [
+        { percent: 30, stock: "2330" },
+        { percent: 20, stock: "NVDA" },
+        { percent: 10, stock: "2618" },
+        { percent: 15, stock: "PLTR" },
+        { percent: 10, stock: "TSLA" },
+        { percent: 15, stock: "AAPL" }
+      ]
+    };
 
-    function switchTab(tabId, event) {
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById(tabId).classList.add('active');
-    }
+    const priceDataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRQlSijrrBhnnI9iHyYLdFhiV_ykLNwQhOQ3QSeIAXP6ZCn-1r03oov2AvjL6W_AwvL0QRIYZ-W-3nB/pub?gid=0&single=true&output=csv';
+
+    let priceData = {};
 
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
       const data = {};
       for (let i = 1; i < lines.length; i++) {
-        const [stock, init, current] = lines[i].split(',');
-        data[stock.trim()] = { init: parseFloat(init), current: parseFloat(current) };
+        const [stock, initStr, currentStr] = lines[i].split(',');
+        data[stock.trim()] = {
+          init: parseFloat(initStr),
+          current: parseFloat(currentStr)
+        };
       }
       return data;
     }
 
-    function showPie(name) {
-      const portfolio = investorData[name];
-      const labels = portfolio.map(p => p.stock);
-      const data = portfolio.map(p => p.percent);
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
 
-      if (chart) chart.destroy();
+      if (tab === 'investor') renderInvestorDetail();
+      if (tab === 'stock') renderStockRanking();
+      if (tab === 'ranking') renderInvestorRanking();
+    }
 
-      chart = new Chart(document.getElementById("pieChart"), {
+    function renderInvestorDetail() {
+      const container = document.getElementById("content");
+      container.innerHTML = '';
+
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        let html = `<h2>${name}</h2><table><thead><tr>
+            <th>股票代號</th><th>初始價格</th><th>目前價格</th>
+            <th>投資比例 (%)</th><th>報酬率 (%)</th>
+          </tr></thead><tbody>`;
+
+        const pieData = [];
+
+        for (const item of portfolio) {
+          const p = priceData[item.stock];
+          if (p) {
+            const roi = ((p.current - p.init) / p.init) * 100;
+            totalROI += roi * (item.percent / 100);
+            const roiClass = roi >= 0 ? 'positive' : 'negative';
+            html += `<tr>
+              <td>${item.stock}</td>
+              <td>${p.init.toFixed(2)}</td>
+              <td>${p.current.toFixed(2)}</td>
+              <td>${item.percent}</td>
+              <td class="${roiClass}">${roi.toFixed(2)}%</td>
+            </tr>`;
+
+            pieData.push({ stock: item.stock, percent: item.percent });
+          }
+        }
+
+        const roiClass = totalROI >= 0 ? 'positive' : 'negative';
+        html += `</tbody><tfoot><tr>
+            <td colspan="4"><strong>總報酬率</strong></td>
+            <td class="${roiClass}"><strong>${totalROI.toFixed(2)}%</strong></td>
+          </tr></tfoot></table>`;
+
+        container.innerHTML += html;
+        showPieChart(name, pieData);
+      }
+    }
+
+    function showPieChart(name, pieData) {
+      const container = document.getElementById("panel");
+      const labels = pieData.map(item => item.stock);
+      const data = pieData.map(item => item.percent);
+
+      new Chart(document.getElementById("pieChart"), {
         type: 'pie',
         data: {
           labels: labels,
           datasets: [{
             data: data,
             backgroundColor: [
-              '#38bdf8','#4ade80','#fbbf24','#f87171','#a78bfa','#22d3ee','#facc15','#fb923c','#94a3b8'
+              '#38bdf8','#4ade80','#f87171','#fbbf24','#9333ea','#e11d48'
             ],
-            borderColor: '#0f172a',
+            borderColor: '#1e293b',
             borderWidth: 2
           }]
         },
         options: {
-          responsive: true,
           plugins: {
-            legend: { labels: { color: '#f8fafc' } },
             datalabels: {
-              color: '#f8fafc',
-              formatter: (value, context) => `${context.chart.data.labels[context.dataIndex]}\n${value}%`,
-              font: { weight: 'bold', size: 14 }
+              formatter: (value, context) => {
+                return `${context.chart.data.labels[context.dataIndex]}: ${value}%`;
+              },
+              color: '#fff',
+              font: { weight: 'bold' }
+            }
+          },
+          hover: {
+            onHover: function(event, chartElement) {
+              if (chartElement.length) {
+                chartElement[0]._model.backgroundColor = '#fbbf24';  // 改變鼠標懸停時的顏色
+              }
             }
           }
-        },
-        plugins: [ChartDataLabels]
+        }
+      });
+      container.style.display = 'block';
+    }
+
+    function renderStockRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = `<h2>📊 個股績效排名</h2>`;
+      const stocks = Object.entries(priceData).map(([stock, data]) => {
+        const roi = ((data.current - data.init) / data.init) * 100;
+        return { stock, roi, init: data.init, current: data.current };
       });
 
-      document.getElementById("panel").style.display = 'block';
+      stocks.sort((a, b) => b.roi - a.roi);
+
+      let html = `<table><thead>
+        <tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>報酬率 (%)</th></tr>
+      </thead><tbody>`;
+      for (const s of stocks) {
+        const roiClass = s.roi >= 0 ? 'positive' : 'negative';
+        html += `<tr>
+          <td>${s.stock}</td>
+          <td>${s.init.toFixed(2)}</td>
+          <td>${s.current.toFixed(2)}</td>
+          <td class="${roiClass}">${s.roi.toFixed(2)}%</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML += html;
     }
+
+    function renderInvestorRanking() {
+      const container = document.getElementById("content");
+      container.innerHTML = `<h2>🏆 投資人總報酬率排名</h2>`;
+      const ranking = [];
+
+      for (const [name, portfolio] of Object.entries(investorData)) {
+        let totalROI = 0;
+        for (const item of portfolio) {
+          const p = priceData[item.stock];
+          if (p) {
+            const roi = ((p.current - p.init) / p.init) * 100;
+            totalROI += roi * (item.percent / 100);
+          }
+        }
+        ranking.push({ name, roi: totalROI });
+      }
+
+      ranking.sort((a, b) => b.roi - a.roi);
+
+      let html = `<table><thead>
+        <tr><th>投資人</th><th>總報酬率 (%)</th></tr>
+      </thead><tbody>`;
+      for (const r of ranking) {
+        const roiClass = r.roi >= 0 ? 'positive' : 'negative';
+        html += `<tr>
+          <td>${r.name}</td>
+          <td class="${roiClass}">${r.roi.toFixed(2)}%</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML += html;
+    }
+
+    fetch(priceDataUrl)
+      .then(res => res.text())
+      .then(csv => {
+        priceData = parseCSV(csv);
+        renderInvestorDetail(); // 預設載入第一個 tab
+      });
   </script>
 </body>
 </html>
