@@ -264,7 +264,7 @@
           if (p) {
             const roi = ((p.current - p.init) / p.init) * 100;
             totalROI += roi * (percent / 100);
-            html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+            html += `<tr><td><span class="stock-name" onclick="showStockOwnershipChart('${stock}')">${stock}</span></td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td>${percent}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
           } else {
             html += `<tr><td>${stock}</td><td colspan="4">無價格資料</td></tr>`;
           }
@@ -283,24 +283,47 @@
 
       for (const stock in priceData) {
         const p = priceData[stock];
-        if (p.init > 0) {
-          stockReturns[stock] = ((p.current - p.init) / p.init) * 100;
+        if (p) {
+          const roi = ((p.current - p.init) / p.init) * 100;
+          stockReturns[stock] = roi;
         }
       }
 
-      const sorted = Object.entries(stockReturns).sort((a, b) => b[1] - a[1]);
-      const container = document.getElementById("stocks");
-      container.innerHTML = `<h2>各股績效排名</h2><table><thead><tr><th>股票代號</th><th>報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(([stock, roi]) => `<tr><td>${stock}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
+      const container = document.getElementById('stocks');
+      let html = `<h2>股票績效</h2><table><thead><tr><th>股票代號</th><th>初始價格</th><th>目前價格</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+
+      for (const stock in stockReturns) {
+        const p = priceData[stock];
+        const roi = stockReturns[stock];
+        html += `<tr><td>${stock}</td><td>${p.init.toFixed(2)}</td><td>${p.current.toFixed(2)}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+      }
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
     }
 
-    function generateInvestorRanking(rankingData) {
-      const sorted = rankingData.sort((a, b) => b.roi - a.roi);
-      const container = document.getElementById("ranking");
-      container.innerHTML = `<h2>投資人總報酬率排名</h2><table><thead><tr><th>投資人</th><th>總報酬率 (%)</th></tr></thead><tbody>` +
-        sorted.map(({ name, roi }) => `<tr><td>${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`).join('') +
-        '</tbody></table>';
+    function generateInvestorRanking(results) {
+      results.sort((a, b) => b.roi - a.roi);
+      const container = document.getElementById('ranking');
+      let html = `<h2>投資人績效排名</h2><table><thead><tr><th>投資人</th><th>報酬率 (%)</th></tr></thead><tbody>`;
+
+      for (const { name, roi } of results) {
+        html += `<tr><td>${name}</td><td class="${roi >= 0 ? 'positive' : 'negative'}">${roi.toFixed(2)}%</td></tr>`;
+      }
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function switchTab(tab) {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => tab.classList.remove('active'));
+      contents.forEach(content => content.classList.remove('active'));
+
+      document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+      document.getElementById(tab).classList.add('active');
     }
 
     fetch(priceDataUrl)
@@ -310,24 +333,6 @@
         generateInvestorReport();
         generateStockPerformance();
       });
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tabContent => tabContent.classList.remove('active'));
-      
-      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
-      document.getElementById(tabName).classList.add('active');
-    }
-
-    window.addEventListener('resize', function() {
-      const chartContainer = document.getElementById('pieChart');
-      if (chartContainer) {
-        const chart = echarts.getInstanceByDom(chartContainer);
-        if (chart) {
-          chart.resize();
-        }
-      }
-    });
   </script>
 </body>
 </html>
