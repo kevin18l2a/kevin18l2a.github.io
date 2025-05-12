@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>投資人投報率報表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -58,6 +60,27 @@
       padding-bottom: 5px;
       margin-top: 40px;
     }
+    .panel {
+      display: none;
+      position: fixed;
+      top: 50px;
+      right: 20px;
+      width: 400px;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      z-index: 999;
+    }
+    .panel-close {
+      cursor: pointer;
+      text-align: right;
+      color: #f87171;
+      font-weight: bold;
+    }
+    canvas {
+      max-width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -69,6 +92,11 @@
   </div>
 
   <div id="content"></div>
+
+  <div id="panel" class="panel">
+    <div class="panel-close" onclick="document.getElementById('panel').style.display='none'">✖</div>
+    <canvas id="pieChart"></canvas>
+  </div>
 
   <script>
     const investorData = {
@@ -152,6 +180,8 @@
             <th>投資比例 (%)</th><th>報酬率 (%)</th>
           </tr></thead><tbody>`;
 
+        const pieData = [];
+
         for (const item of portfolio) {
           const p = priceData[item.stock];
           if (p) {
@@ -165,6 +195,8 @@
               <td>${item.percent}</td>
               <td class="${roiClass}">${roi.toFixed(2)}%</td>
             </tr>`;
+
+            pieData.push({ stock: item.stock, percent: item.percent });
           }
         }
 
@@ -175,7 +207,41 @@
           </tr></tfoot></table>`;
 
         container.innerHTML += html;
+        showPieChart(name, pieData);
       }
+    }
+
+    function showPieChart(name, pieData) {
+      const container = document.getElementById("panel");
+      const labels = pieData.map(item => item.stock);
+      const data = pieData.map(item => item.percent);
+
+      new Chart(document.getElementById("pieChart"), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#38bdf8','#4ade80','#f87171','#fbbf24','#9333ea','#e11d48'
+            ],
+            borderColor: '#1e293b',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+            datalabels: {
+              formatter: (value, context) => {
+                return `${context.chart.data.labels[context.dataIndex]}: ${value}%`;
+              },
+              color: '#fff',
+              font: { weight: 'bold' }
+            }
+          }
+        }
+      });
+      container.style.display = 'block';
     }
 
     function renderStockRanking() {
