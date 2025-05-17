@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>多色彩煙火模擬 - 可調整頻率</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden; background-color: black;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      background-color: black;
+      flex-grow: 1;
+      width: 100vw;
+    }
+    #controls {
+      width: 300px;
+      color: white;
+      font-family: sans-serif;
+      margin: 10px 0;
+      text-align: center;
+      user-select: none;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label for="freqRange">自動發射頻率: <span id="freqValue">2%</span></label><br/>
+    <input type="range" id="freqRange" min="0" max="100" value="2" />
+  </div>
+  <canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let fireworks = [];
+let particles = [];
+let stars = [];
+const gravity = 0.05;
+
+let autoFireFrequency = 0.02; // 預設 2%
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+
+document.addEventListener("click", (e) => {
+  launchFirework(e.clientX, Math.min(e.clientY, canvas.height * 0.8));
+});
+document.addEventListener("touchstart", (e) => {
+  const touch = e.touches[0];
+  launchFirework(touch.clientX, Math.min(touch.clientY, canvas.height * 0.8));
+});
+
+function drawBackground() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    ctx.fillStyle = "white";
+    ctx.fill();
+  }
+
+  ctx.beginPath();
+  ctx.arc(canvas.width - 100, 100, 40, 0, Math.PI * 2);
+  ctx.fillStyle = "#fdf6b2";
+  ctx.fill();
+
+  ctx.fillStyle = "#001f3f";
+  ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
+
+  const waveHeight = 10;
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  for (let i = 0; i < canvas.width; i += 30) {
+    ctx.beginPath();
+    ctx.arc(i, canvas.height * 0.8 + waveHeight * Math.sin(i * 0.05 + Date.now() * 0.005), 20, 0, Math.PI);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+  ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
+}
+
+// 這裡修改限制目標 y 座標最高到畫布的 80% 以下，避免爆炸超出畫面
+function launchFirework(x, y) {
+  x = Math.max(50, Math.min(x, canvas.width - 50));
+  y = Math.max(50, Math.min(y, canvas.height * 0.8));
+  const startX = x + (Math.random() - 0.5) * 40;
+  const startY = canvas.height;
+  const vx = (x - startX) / 30;
+  const vy = (y - startY) / 30;
+  fireworks.push({ x: startX, y: startY, targetX: x, targetY: y, vx, vy });
+}
+
+const baseColors = [
+  "#ff3b3b", "#ff963b", "#fffb3b",
+  "#3bff4c", "#3bc6ff", "#8a3bff",
+  "#ff3bdc"
+];
+
+function createParticles(x, y) {
+  const count = 150 + Math.floor(Math.random() * 50);
+  const mode = Math.floor(Math.random() * 3);
+  const singleColor = baseColors[Math.floor(Math.random() * baseColors.length)];
+  const twoColors = shuffleArray(baseColors).slice(0, 2);
+  const multiColors = baseColors;
+
+  for (let i = 0; i < count; i++) {
+    let angle = Math.random() * 2 * Math.PI;
+    let speed = Math.random() * 5 + 2;
+    let vx = Math.cos(angle) * speed;
+    let vy = Math.sin(angle) * speed;
+
+    let color;
+    if (mode === 0) {
+      color = singleColor;
+    } else if (mode === 1) {
+      color = twoColors[Math.floor(Math.random() * 2)];
+    } else {
+      color = multiColors[Math.floor(Math.random() * multiColors.length)];
+    }
+
+    particles.push({
+      x,
+      y,
+      vx,
+      vy,
+      alpha: 1,
+      color,
+      flicker: Math.random() > 0.7
+    });
+  }
+}
+
+function shuffleArray(arr) {
+  let array = arr.slice();
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function updateFireworks() {
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    let f = fireworks[i];
+    f.x += f.vx;
+    f.y += f.vy;
+    f.vy += gravity / 2;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "white";
+    ctx.fill();
+
+    if (Math.abs(f.x - f.targetX) < 10 && Math.abs(f.y - f.targetY) < 10) {
+      createParticles(f.x, f.y);
+      fireworks.splice(i, 1);
+    }
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += gravity;
+    p.alpha -= 0.015;
+    if (p.alpha <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    if (p.flicker && Math.random() < 0.2) continue;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha})`;
+    ctx.fill();
+
+    if (p.y > canvas.height * 0.8) {
+      const waveY = canvas.height * 1.6 - p.y + Math.sin(p.x * 0.05 + Date.now() * 0.01) * 3;
+      ctx.beginPath();
+      ctx.arc(p.x, waveY, 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha * 0.3})`;
+      ctx.fill();
+    }
+  }
+}
+
+function hexToRgb(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r},${g},${b}`;
+}
+
+function animate() {
+  drawBackground();
+  updateFireworks();
+  updateParticles();
+
+  if (Math.random() < autoFireFrequency) {
+    launchFirework(Math.random() * (canvas.width - 100) + 50, Math.random() * canvas.height * 0.8);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function initStars() {
+  for (let i = 0; i < 100; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.8,
+      r: Math.random() * 1.5 + 0.5
+    });
+  }
+}
+
+const freqRange = document.getElementById("freqRange");
+const freqValue = document.getElementById("freqValue");
+
+freqRange.addEventListener("input", () => {
+  const val = freqRange.value;
+  freqValue.textContent = val + "%";
+  autoFireFrequency = val / 100;
+});
+
+resizeCanvas();
+initStars();
+animate();
+</script>
+</body>
+</html>
