@@ -56,12 +56,41 @@ function resizeCanvas() {
 }
 window.addEventListener("resize", resizeCanvas);
 
+function launchFirework(x, y) {
+  // 限制 x 不超過畫面左右邊界 50px
+  x = Math.max(50, Math.min(x, canvas.width - 50));
+
+  // 限制 y 目標點在 20% ~ 70% 畫面高度範圍內，不要太低或太高
+  const minY = canvas.height * 0.2;
+  const maxY = canvas.height * 0.7;
+  y = Math.max(minY, Math.min(y, maxY));
+
+  // 起點在底部中央附近左右浮動
+  const startX = x + (Math.random() - 0.5) * 40;
+  const startY = canvas.height;
+
+  const steps = 30;
+  const vx = (x - startX) / steps;
+  const vy = (y - startY) / steps;
+
+  fireworks.push({ x: startX, y: startY, targetX: x, targetY: y, vx, vy });
+}
+
 document.addEventListener("click", (e) => {
-  launchFirework(e.clientX, Math.min(e.clientY, canvas.height * 0.8));
+  launchFirework(e.clientX, e.clientY);
 });
+
+// 觸控防抖，避免多點觸發煙火
+let lastTouchTime = 0;
 document.addEventListener("touchstart", (e) => {
+  const now = Date.now();
+  if (now - lastTouchTime < 200) return; // 200ms 內忽略後續觸控
+  lastTouchTime = now;
+
   const touch = e.touches[0];
-  launchFirework(touch.clientX, Math.min(touch.clientY, canvas.height * 0.8));
+  if (!touch) return;
+
+  launchFirework(touch.clientX, touch.clientY);
 });
 
 function drawBackground() {
@@ -93,17 +122,6 @@ function drawBackground() {
 
   ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
   ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
-}
-
-// 這裡修改限制目標 y 座標最高到畫布的 80% 以下，避免爆炸超出畫面
-function launchFirework(x, y) {
-  x = Math.max(50, Math.min(x, canvas.width - 50));
-  y = Math.max(50, Math.min(y, canvas.height * 0.8));
-  const startX = x + (Math.random() - 0.5) * 40;
-  const startY = canvas.height;
-  const vx = (x - startX) / 30;
-  const vy = (y - startY) / 30;
-  fireworks.push({ x: startX, y: startY, targetX: x, targetY: y, vx, vy });
 }
 
 const baseColors = [
@@ -216,13 +234,14 @@ function animate() {
   updateParticles();
 
   if (Math.random() < autoFireFrequency) {
-    launchFirework(Math.random() * (canvas.width - 100) + 50, Math.random() * canvas.height * 0.8);
+    launchFirework(Math.random() * (canvas.width - 100) + 50, Math.random() * canvas.height * 0.7 + canvas.height * 0.2);
   }
 
   requestAnimationFrame(animate);
 }
 
 function initStars() {
+  stars = [];
   for (let i = 0; i < 100; i++) {
     stars.push({
       x: Math.random() * canvas.width,
