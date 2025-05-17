@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>City Scene with Fireworks and Road Lines</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+    #btnContainer {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    button {
+      background: #222;
+      border: 1px solid #444;
+      color: white;
+      padding: 8px 15px;
+      margin: 0 5px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    button:hover, button.active {
+      background: #555;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="btnContainer">
+    <button id="dayBtn" class="active">白天</button>
+    <button id="duskBtn">黃昏</button>
+    <button id="nightBtn">夜晚</button>
+  </div>
+  <canvas id="nightCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('nightCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initBuildings();
+      initCars();
+      initStars();
+      initWindowLights();
+    });
+
+    let bgMode = 1; // 1=白天, 2=黃昏, 3=夜晚
+
+    const dayBtn = document.getElementById('dayBtn');
+    const duskBtn = document.getElementById('duskBtn');
+    const nightBtn = document.getElementById('nightBtn');
+
+    function setActiveBtn(btn) {
+      [dayBtn, duskBtn, nightBtn].forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    dayBtn.onclick = () => { bgMode = 1; setActiveBtn(dayBtn); initWindowLights(); };
+    duskBtn.onclick = () => { bgMode = 2; setActiveBtn(duskBtn); initWindowLights(); };
+    nightBtn.onclick = () => { bgMode = 3; setActiveBtn(nightBtn); initWindowLights(); };
+
+    function drawSun() {
+      const x = 100;
+      const y = 100;
+      const radius = 50;
+
+      const gradient = ctx.createRadialGradient(x, y, radius * 0.3, x, y, radius);
+      gradient.addColorStop(0, 'rgba(255, 255, 0, 1)');
+      gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawSunset() {
+      const x = canvas.width - 150;
+      const y = canvas.height * 0.5;
+      const radius = 80;
+
+      const gradient = ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius);
+      gradient.addColorStop(0, 'rgba(255, 140, 0, 1)');
+      gradient.addColorStop(0.6, 'rgba(255, 69, 0, 0.7)');
+      gradient.addColorStop(1, 'rgba(255, 140, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawClouds() {
+      ctx.fillStyle = 'white';
+      for (let i = 0; i < 5; i++) {
+        const x = (i * 180 + (Date.now() * 0.03) % 600) % canvas.width;
+        const y = 120 + Math.sin(i + Date.now() * 0.001) * 10;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 40, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawBirds() {
+      const birdCount = 10;
+      const time = Date.now() * 0.002;
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < birdCount; i++) {
+        const x = (time * 50 + i * 100) % canvas.width;
+        const y = 100 + Math.sin(time + i) * 15;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 10, y - 10);
+        ctx.lineTo(x + 20, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawMoon() {
+      const x = canvas.width - 100;
+      const y = 100;
+      ctx.beginPath();
+      ctx.arc(x, y, 40, 0, Math.PI * 2);
+      ctx.fillStyle = '#fdf5e6';
+      ctx.shadowColor = '#fdf5e6';
+      ctx.shadowBlur = 25;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    let stars = [];
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 150; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height * 0.6,
+          radius: Math.random() * 1.5,
+          alpha: Math.random(),
+          delta: 0.002 + Math.random() * 0.003
+        });
+      }
+    }
+    initStars();
+
+    let buildings = [];
+    function initBuildings() {
+      buildings = [];
+      const count = 30;
+      for (let i = 0; i < count; i++) {
+        const width = 40 + Math.random() * 30;
+        const height = 100 + Math.random() * 200;
+        const x = i * (canvas.width / count);
+        const y = canvas.height - height - 100;
+        buildings.push({ x, y, width, height });
+      }
+    }
+    initBuildings();
+
+    let frameCount = 0;
+
+    let windowLightsState = [];
+    function initWindowLights() {
+      windowLightsState = [];
+      for (let bIdx = 0; bIdx < buildings.length; bIdx++) {
+        const b = buildings[bIdx];
+        const rows = Math.floor(b.height / 20);
+        const cols = Math.floor(b.width / 10);
+        const buildingStates = [];
+        for (let r = 0; r < rows; r++) {
+          const rowStates = [];
+          for (let c = 0; c < cols; c++) {
+            if (bgMode === 1) {
+              rowStates.push({
+                lit: true,
+                toggleInterval: Infinity,
+                frameCounter: 0
+              });
+            } else {
+              rowStates.push({
+                lit: Math.random() > 0.5,
+                toggleInterval: 180 + Math.floor(Math.random() * 240),
+                frameCounter: Math.floor(Math.random() * 420)
+              });
+            }
+          }
+          buildingStates.push(rowStates);
+        }
+        windowLightsState.push(buildingStates);
+      }
+    }
+    initWindowLights();
+
+    function drawBuildings() {
+      frameCount++;
+      for (let bIdx = 0; bIdx < buildings.length; bIdx++) {
+        const b = buildings[bIdx];
+
+        let baseColor, outlineColor;
+        if (bgMode === 1) {
+          baseColor = '#666666';
+          outlineColor = '#444444';
+        } else if (bgMode === 2) {
+          baseColor = '#553322';
+          outlineColor = '#331a11';
+        } else {
+          baseColor = '#111133';
+          outlineColor = '#080820';
+        }
+
+        ctx.fillStyle = baseColor;
+        ctx.strokeStyle = outlineColor;
+        ctx.lineWidth = 1;
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+        ctx.strokeRect(b.x, b.y, b.width, b.height);
+
+        const rows = windowLightsState[bIdx].length;
+        const cols = windowLightsState[bIdx][0].length;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let lightInfo = windowLightsState[bIdx][r][c];
+            if (lightInfo.toggleInterval !== Infinity) {
+              lightInfo.frameCounter++;
+              if (lightInfo.frameCounter > lightInfo.toggleInterval) {
+                lightInfo.lit = !lightInfo.lit;
+                lightInfo.frameCounter = 0;
+              }
+            }
+            const wx = b.x + c * 10 + 3;
+            const wy = b.y + r * 20 + 3;
+            if (lightInfo.lit) {
+              ctx.fillStyle = bgMode === 3 ? 'rgba(255, 240, 100, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+            } else {
+              ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            }
+            ctx.fillRect(wx, wy, 6, 14);
+          }
+        }
+      }
+    }
+
+    function drawRoad() {
+      // 路面顏色
+      ctx.fillStyle = bgMode === 1 ? '#444' : bgMode === 2 ? '#331a11' : '#222222';
+      ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+
+      // 車道線（雙線，分隔雙向車道）
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([20, 15]);
+
+      // 上方車道線
+      const laneTopY = canvas.height - 70;
+      ctx.beginPath();
+      ctx.moveTo(0, laneTopY);
+      ctx.lineTo(canvas.width, laneTopY);
+      ctx.stroke();
+
+      // 下方車道線
+      const laneBottomY = canvas.height - 30;
+      ctx.beginPath();
+      ctx.moveTo(0, laneBottomY);
+      ctx.lineTo(canvas.width, laneBottomY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+    }
+
+    // 煙火用
+    let fireworks = [];
+    function initFireworks() {
+      fireworks = [];
+    }
+
+    function createFirework() {
+      return {
+        x: Math.random() * canvas.width,
+        y: canvas.height * 0.3 + Math.random() * canvas.height * 0.2, // 較高煙火
+        particles: [],
+        exploded: false,
+        color: `hsl(${Math.random() * 360}, 100%, 60%)`
+      };
+    }
+
+    function updateFireworks() {
+      // 新增更多煙火，密集度提升
+      if (fireworks.length < 15 && Math.random() < 0.07) {
+        fireworks.push(createFirework());
+      }
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const f = fireworks[i];
+        if (!f.exploded) {
+          f.y -= 6;
+          if (f.y < canvas.height * 0.25 || Math.random() < 0.07) {
+            f.exploded = true;
+            for (let j = 0; j < 60; j++) {
+              const angle = (Math.PI * 2 / 60) * j;
+              const speed = 3 + Math.random() * 2;
+              f.particles.push({
+                x: f.x,
+                y: f.y,
+                speedX: Math.cos(angle) * speed,
+                speedY: Math.sin(angle) * speed,
+                alpha: 1,
+                decay: 0.03 + Math.random() * 0.02,
+                color: `hsl(${(j * 6 + Math.random() * 30) % 360}, 100%, 60%)`
+              });
+            }
+          }
+        } else {
+          f.particles.forEach(p => {
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.alpha -= p.decay;
+          });
+          f.particles = f.particles.filter(p => p.alpha > 0);
+          if (f.particles.length === 0) {
+            fireworks.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    function drawFireworks() {
+      fireworks.forEach(f => {
+        if (!f.exploded) {
+          ctx.beginPath();
+          ctx.fillStyle = f.color;
+          ctx.arc(f.x, f.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          f.particles.forEach(p => {
+            ctx.beginPath();
+            ctx.strokeStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.lineWidth = 2;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - p.speedX * 3, p.y - p.speedY * 3);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          });
+        }
+      });
+    }
+
+    // 車子設定
+    let cars = [];
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i=0; i<6; i++) {
+        color += letters[Math.floor(Math.random()*16)];
+      }
+      return color;
+    }
+
+    function shadeColor(color, percent) {
+      let f=parseInt(color.slice(1),16),
+          t=percent<0?0:255,
+          p=percent<0?percent*-1:percent,
+          R=f>>16,
+          G=f>>8&0x00FF,
+          B=f&0x0000FF;
+      return "#" + (0x1000000 + (Math.round((t-R)*p/100)+R)*0x10000 
+        + (Math.round((t-G)*p/100)+G)*0x100 + (Math.round((t-B)*p/100)+B)).toString(16).slice(1);
+    }
+
+    function initCars() {
+      cars = [];
+      // 上下兩條車道Y位置
+      const lane1Y = canvas.height - 75; // 上面車道
+      const lane2Y = canvas.height - 35; // 下面車道
+      for (let i = 0; i < 12; i++) {
+        // 上面車道：方向往右
+        cars.push({
+          x: Math.random() * canvas.width,
+          y: lane1Y,
+          speed: 1 + Math.random() * 1.5,
+          width: 25 + Math.random() * 20,
+          direction: 1,
+          color: getRandomColor()
+        });
+        // 下面車道：方向往左
+        cars.push({
+          x: Math.random() * canvas.width,
+          y: lane2Y,
+          speed: 1 + Math.random() * 1.5,
+          width: 25 + Math.random() * 20,
+          direction: -1,
+          color: getRandomColor()
+        });
+      }
+    }
+    initCars();
+
+    function drawCars() {
+      cars.forEach(car => {
+        car.x += car.speed * car.direction;
+        if (car.direction === 1 && car.x > canvas.width + 50) car.x = -50;
+        if (car.direction === -1 && car.x < -50) car.x = canvas.width + 50;
+
+        const gradient = ctx.createLinearGradient(car.x, car.y, car.x + car.width, car.y + 15);
+        gradient.addColorStop(0, car.color);
+        gradient.addColorStop(1, shadeColor(car.color, -30));
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(car.x, car.y + 5, car.width, 15);
+
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        if (car.direction === 1) {
+          ctx.ellipse(car.x + car.width, car.y + 15, 5, 3, 0, 0, Math.PI * 2);
+        } else {
+          ctx.ellipse(car.x, car.y + 15, 5, 3, 0, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      });
+    }
+
+    function drawStars() {
+      stars.forEach(s => {
+        s.alpha += s.delta;
+        if (s.alpha >= 1) {
+          s.alpha = 1;
+          s.delta = -s.delta;
+        }
+        if (s.alpha <= 0) {
+          s.alpha = 0;
+          s.delta = -s.delta;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 背景
+      if (bgMode === 1) {
+        ctx.fillStyle = '#87ceeb';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawSun();
+        drawClouds();
+        drawBirds();
+      } else if (bgMode === 2) {
+        ctx.fillStyle = '#ff9966';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawSunset();
+        drawClouds();
+      } else {
+        ctx.fillStyle = '#000011';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawMoon();
+        drawStars();
+        updateFireworks();
+        drawFireworks();
+      }
+
+      drawBuildings();
+      drawRoad();
+      drawCars();
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
