@@ -60,8 +60,8 @@ function launchFirework(x, y) {
   // 限制 x 不超過畫面左右邊界 50px
   x = Math.max(50, Math.min(x, canvas.width - 50));
 
-  // 限制 y 目標點在 20% ~ 70% 畫面高度範圍內，不要太低或太高
-  const minY = canvas.height * 0.2;
+  // 調整爆炸高度限制為 30% ~ 90%
+  const minY = canvas.height * 0.05;
   const maxY = canvas.height * 0.7;
   y = Math.max(minY, Math.min(y, maxY));
 
@@ -234,7 +234,10 @@ function animate() {
   updateParticles();
 
   if (Math.random() < autoFireFrequency) {
-    launchFirework(Math.random() * (canvas.width - 100) + 50, Math.random() * canvas.height * 0.7 + canvas.height * 0.2);
+    launchFirework(
+      Math.random() * (canvas.width - 100) + 50,
+      Math.random() * canvas.height * 0.6 + canvas.height * 0.3
+    );
   }
 
   requestAnimationFrame(animate);
