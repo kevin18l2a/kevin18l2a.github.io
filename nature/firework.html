@@ -50,10 +50,12 @@
   <canvas id="canvas"></canvas>
   <audio id="bgm" src="music/打上花火.mp3" autoplay loop></audio>
 
+
   <div id="controls">
     <button id="btn-decrease">-</button>
     <span id="freq-display">頻率: 1</span>
     <button id="btn-increase">+</button>
+    <button id="btn-music">暫停音樂</button>
   </div>
 
 <script>
@@ -63,6 +65,20 @@ document.addEventListener("click", () => {
     bgm.play();
   }
 }, { once: true });
+
+const bgm = document.getElementById("bgm");
+const btnMusic = document.getElementById("btn-music");
+
+btnMusic.addEventListener("click", () => {
+  if (bgm.paused) {
+    bgm.play();
+    btnMusic.textContent = "暫停音樂";
+  } else {
+    bgm.pause();
+    btnMusic.textContent = "播放音樂";
+  }
+});
+
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
