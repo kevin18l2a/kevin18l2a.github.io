@@ -1,270 +1,406 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>多色彩煙火模擬 - 可調整頻率</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>煙火模擬器 + 波光海面 + 星星愛心煙火 + 大型煙火</title>
   <style>
     html, body {
-      margin: 0; padding: 0; overflow: hidden; background-color: black;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      overflow: hidden;
+      height: 100%;
     }
     canvas {
       display: block;
-      background-color: black;
-      flex-grow: 1;
-      width: 100vw;
     }
     #controls {
-      width: 300px;
+      position: fixed;
+      top: 10px;
+      left: 10px;
       color: white;
       font-family: sans-serif;
-      margin: 10px 0;
-      text-align: center;
       user-select: none;
+      z-index: 10;
     }
-    input[type=range] {
-      width: 100%;
+    #controls button {
+      font-size: 18px;
+      padding: 5px 10px;
+      margin: 0 2px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid white;
+      color: white;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    #controls button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    #freq-display {
+      margin: 0 10px;
+      font-weight: bold;
+      font-size: 18px;
+      vertical-align: middle;
     }
   </style>
 </head>
 <body>
-  <div id="controls">
-    <label for="freqRange">自動發射頻率: <span id="freqValue">2%</span></label><br/>
-    <input type="range" id="freqRange" min="0" max="100" value="2" />
-  </div>
   <canvas id="canvas"></canvas>
+  <audio id="bgm" src="music/打上花火.mp3" autoplay loop></audio>
+
+  <div id="controls">
+    <button id="btn-decrease">-</button>
+    <span id="freq-display">頻率: 1</span>
+    <button id="btn-increase">+</button>
+  </div>
+
 <script>
+document.addEventListener("click", () => {
+  const bgm = document.getElementById("bgm");
+  if (bgm && bgm.paused) {
+    bgm.play();
+  }
+}, { once: true });
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let w, h, time = 0;
+const stars = [];
+const fireworks = [];
 
-let fireworks = [];
-let particles = [];
-let stars = [];
-const gravity = 0.05;
+let frequencyLevel = 1;
+let launchInterval = 1000 / frequencyLevel;
+let launchTimer = null;
 
-let autoFireFrequency = 0.02; // 預設 2%
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resizeCanvas);
-
-function launchFirework(x, y) {
-  // 限制 x 不超過畫面左右邊界 50px
-  x = Math.max(50, Math.min(x, canvas.width - 50));
-
-  // 調整爆炸高度限制為 30% ~ 90%
-  const minY = canvas.height * 0.05;
-  const maxY = canvas.height * 0.7;
-  y = Math.max(minY, Math.min(y, maxY));
-
-  // 起點在底部中央附近左右浮動
-  const startX = x + (Math.random() - 0.5) * 40;
-  const startY = canvas.height;
-
-  const steps = 30;
-  const vx = (x - startX) / steps;
-  const vy = (y - startY) / steps;
-
-  fireworks.push({ x: startX, y: startY, targetX: x, targetY: y, vx, vy });
-}
-
-document.addEventListener("click", (e) => {
-  launchFirework(e.clientX, e.clientY);
-});
-
-// 觸控防抖，避免多點觸發煙火
-let lastTouchTime = 0;
-document.addEventListener("touchstart", (e) => {
-  const now = Date.now();
-  if (now - lastTouchTime < 200) return; // 200ms 內忽略後續觸控
-  lastTouchTime = now;
-
-  const touch = e.touches[0];
-  if (!touch) return;
-
-  launchFirework(touch.clientX, touch.clientY);
-});
-
-function drawBackground() {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let star of stars) {
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-    ctx.fillStyle = "white";
-    ctx.fill();
-  }
-
-  ctx.beginPath();
-  ctx.arc(canvas.width - 100, 100, 40, 0, Math.PI * 2);
-  ctx.fillStyle = "#fdf6b2";
-  ctx.fill();
-
-  ctx.fillStyle = "#001f3f";
-  ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
-
-  const waveHeight = 10;
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-  for (let i = 0; i < canvas.width; i += 30) {
-    ctx.beginPath();
-    ctx.arc(i, canvas.height * 0.8 + waveHeight * Math.sin(i * 0.05 + Date.now() * 0.005), 20, 0, Math.PI);
-    ctx.fill();
-  }
-
-  ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-  ctx.fillRect(0, canvas.height * 0.8, canvas.width, canvas.height * 0.2);
-}
-
-const baseColors = [
-  "#ff3b3b", "#ff963b", "#fffb3b",
-  "#3bff4c", "#3bc6ff", "#8a3bff",
-  "#ff3bdc"
-];
-
-function createParticles(x, y) {
-  const count = 150 + Math.floor(Math.random() * 50);
-  const mode = Math.floor(Math.random() * 3);
-  const singleColor = baseColors[Math.floor(Math.random() * baseColors.length)];
-  const twoColors = shuffleArray(baseColors).slice(0, 2);
-  const multiColors = baseColors;
-
-  for (let i = 0; i < count; i++) {
-    let angle = Math.random() * 2 * Math.PI;
-    let speed = Math.random() * 5 + 2;
-    let vx = Math.cos(angle) * speed;
-    let vy = Math.sin(angle) * speed;
-
-    let color;
-    if (mode === 0) {
-      color = singleColor;
-    } else if (mode === 1) {
-      color = twoColors[Math.floor(Math.random() * 2)];
-    } else {
-      color = multiColors[Math.floor(Math.random() * multiColors.length)];
-    }
-
-    particles.push({
-      x,
-      y,
-      vx,
-      vy,
-      alpha: 1,
-      color,
-      flicker: Math.random() > 0.7
+function generateStars() {
+  stars.length = 0;
+  for (let i = 0; i < 100; i++) {
+    stars.push({
+      x: Math.random() * w,
+      y: Math.random() * h * 0.75,
+      r: Math.random() * 1.5 + 0.5,
+      alpha: Math.random()
     });
   }
 }
 
-function shuffleArray(arr) {
-  let array = arr.slice();
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
+function resizeCanvas() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  generateStars();
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function drawMoon() {
+  const x = w * 0.8;
+  const y = h * 0.2;
+  const radius = 40;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255, 255, 200, 0.8)";
+  ctx.fill();
 }
 
-function updateFireworks() {
-  for (let i = fireworks.length - 1; i >= 0; i--) {
-    let f = fireworks[i];
-    f.x += f.vx;
-    f.y += f.vy;
-    f.vy += gravity / 2;
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "white";
-    ctx.fill();
-
-    if (Math.abs(f.x - f.targetX) < 10 && Math.abs(f.y - f.targetY) < 10) {
-      createParticles(f.x, f.y);
-      fireworks.splice(i, 1);
+class Firework {
+  constructor(x, y, color, shape) {
+    this.x = x;
+    this.y = y;
+    this.exploded = false;
+    this.particles = [];
+    this.color = color;
+    this.shape = shape; // 新增形狀參數
+    this.vy = -Math.random() * 7 - 7;
+    this.lightRadius = 0;
+    this.lightAlpha = 0;
+  }
+  update() {
+    if (!this.exploded) {
+      this.y += this.vy;
+      this.vy += 0.2;
+      if (this.vy > 0) {
+        this.explode();
+      }
+    } else {
+      this.lightRadius += 3;
+      this.lightAlpha -= 0.02;
+      if (this.lightAlpha < 0) this.lightAlpha = 0;
+      for (let p of this.particles) {
+        p.update();
+      }
+      this.particles = this.particles.filter(p => p.alpha > 0);
     }
   }
-}
-
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += gravity;
-    p.alpha -= 0.015;
-    if (p.alpha <= 0) {
-      particles.splice(i, 1);
-      continue;
-    }
-
-    if (p.flicker && Math.random() < 0.2) continue;
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha})`;
-    ctx.fill();
-
-    if (p.y > canvas.height * 0.8) {
-      const waveY = canvas.height * 1.6 - p.y + Math.sin(p.x * 0.05 + Date.now() * 0.01) * 3;
+  draw() {
+    if (!this.exploded) {
       ctx.beginPath();
-      ctx.arc(p.x, waveY, 2, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha * 0.3})`;
+      ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else {
+      if (this.lightAlpha > 0) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.lightRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${this.color}, ${this.lightAlpha})`;
+        ctx.fill();
+      }
+      for (let p of this.particles) {
+        p.draw();
+        p.drawReflection();
+      }
+    }
+  }
+  explode() {
+    this.exploded = true;
+    this.lightAlpha = 0.5;
+    // 產生不同形狀的粒子
+    for (let i = 0; i < 80; i++) {
+      this.particles.push(new Particle(this.x, this.y, this.color, this.shape));
+    }
+  }
+  isDone() {
+    return this.exploded && this.particles.length === 0 && this.lightAlpha === 0;
+  }
+}
+
+class Particle {
+  constructor(x, y, color, shape = 'circle') {
+    this.x = x;
+    this.y = y;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 5 + 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.alpha = 1;
+    this.color = color;
+    this.size = Math.random() * 3 + 1.5;
+    this.gravity = 0.05;
+    this.friction = 0.96;
+    this.blink = Math.random() < 0.5;
+    this.blinkAlpha = Math.random();
+    this.shape = shape;  // 新增形狀屬性
+  }
+  update() {
+    this.vx *= this.friction;
+    this.vy *= this.friction;
+    this.vy += this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= 0.015;
+    if (this.alpha < 0) this.alpha = 0;
+    if (this.blink) {
+      this.blinkAlpha += 0.05;
+      if (this.blinkAlpha > 1) this.blinkAlpha = 0;
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.globalAlpha = this.alpha * (this.blink ? this.blinkAlpha * 0.5 + 0.5 : 1);
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10 * this.alpha;
+    ctx.fillStyle = `rgba(${this.color},1)`;
+
+    if (this.shape === 'star') {
+      drawStar(ctx, 0, 0, 5, this.size, this.size / 2);
+    } else if (this.shape === 'heart') {
+      drawHeart(ctx, 0, 0, this.size);
+    } else {
+      // 預設圓形
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+  drawReflection() {
+    const reflectionY = h - (this.y * 0.95);
+    if (reflectionY >= h * 0.75) {
+      ctx.save();
+      ctx.translate(this.x, reflectionY);
+      ctx.globalAlpha = this.alpha * 0.3;
+      ctx.fillStyle = `rgba(${this.color},1)`;
+
+      if (this.shape === 'star') {
+        drawStar(ctx, 0, 0, 5, this.size * 0.8, this.size * 0.4);
+      } else if (this.shape === 'heart') {
+        drawHeart(ctx, 0, 0, this.size * 0.8);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
   }
 }
 
-function hexToRgb(hex) {
-  const bigint = parseInt(hex.slice(1), 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `${r},${g},${b}`;
+// 畫五角星函式
+function drawStar(ctx, x, y, points, outerRadius, innerRadius) {
+  const step = Math.PI / points;
+  ctx.beginPath();
+  for (let i = 0; i < 2 * points; i++) {
+    const r = i % 2 === 0 ? outerRadius : innerRadius;
+    const a = i * step - Math.PI / 2;
+    ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.fill();
 }
 
-function animate() {
-  drawBackground();
-  updateFireworks();
-  updateParticles();
+// 畫愛心函式
+function drawHeart(ctx, x, y, size) {
+  ctx.beginPath();
+  const topCurveHeight = size * 0.3;
+  ctx.moveTo(x, y + size / 4);
+  ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + topCurveHeight);
+  ctx.bezierCurveTo(x - size / 2, y + size / 2, x, y + size * 0.75, x, y + size);
+  ctx.bezierCurveTo(x, y + size * 0.75, x + size / 2, y + size / 2, x + size / 2, y + topCurveHeight);
+  ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + size / 4);
+  ctx.closePath();
+  ctx.fill();
+}
 
-  if (Math.random() < autoFireFrequency) {
-    launchFirework(
-      Math.random() * (canvas.width - 100) + 50,
-      Math.random() * canvas.height * 0.6 + canvas.height * 0.3
-    );
+function drawSky() {
+  ctx.fillStyle = "rgba(0, 0, 30, 0.3)";
+  ctx.fillRect(0, 0, w, h);
+
+  for (let star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+    ctx.fill();
+  }
+
+  drawMoon();
+}
+
+function drawSeaSurface() {
+  ctx.fillStyle = "#001";
+  ctx.fillRect(0, h * 0.75, w, h * 0.25);
+
+  for (let i = 0; i < 200; i++) {
+    const x = (i * 50 + (time * 100)) % w;
+    const y = h * 0.75 + Math.sin(time + i) * 5 + Math.random() * 10;
+    const width = Math.random() * 30 + 10;
+    const height = 2;
+    const alpha = 0.05 + Math.random() * 0.05;
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillRect(x, y, width, height);
+  }
+}
+
+function launchFirework(x = null, y = null) {
+  if (x === null) x = Math.random() * w * 0.8 + w * 0.1;
+  if (y === null) y = h * 0.5;
+  const color = `${Math.floor(Math.random() * 255)},${Math.floor(
+    Math.random() * 255
+  )},${Math.floor(Math.random() * 255)}`;
+  
+  const shapes = ['circle', 'star', 'heart'];
+  const shape = shapes[Math.floor(Math.random() * shapes.length)];
+
+  fireworks.push(new Firework(x, y, color, shape));
+}
+
+function launchBigFirework() {
+  const groups = 10; // 分成5組大型煙火
+  const groupCount = 10; // 每組10個煙火
+  const regionWidth = w / groups;
+  
+  for (let g = 0; g < groups; g++) {
+    const baseX = regionWidth * g + regionWidth / 2;
+    const baseY = h * 0.4 + Math.random() * h * 0.2;
+    
+    for (let i = 0; i < groupCount; i++) {
+      const offsetX = (Math.random() - 0.5) * 80;
+      const offsetY = (Math.random() - 0.5) * 80;
+      const x = baseX + offsetX;
+      const y = baseY + offsetY;
+      const color = `${Math.floor(Math.random() * 255)},${Math.floor(
+        Math.random() * 255
+      )},${Math.floor(Math.random() * 255)}`;
+      const shapes = ['circle', 'star', 'heart'];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      fireworks.push(new Firework(x, y, color, shape));
+    }
+  }
+}
+
+function startAutoLaunch() {
+  if (launchTimer) clearInterval(launchTimer);
+  launchInterval = 1000 / frequencyLevel;
+  launchTimer = setInterval(() => {
+    launchFirework();
+  }, launchInterval);
+}
+
+// 大型煙火定時器 每30秒觸發一次
+setInterval(() => {
+  launchBigFirework();
+}, 30000);
+
+const btnIncrease = document.getElementById("btn-increase");
+const btnDecrease = document.getElementById("btn-decrease");
+const freqDisplay = document.getElementById("freq-display");
+
+btnIncrease.addEventListener("click", () => {
+  if (frequencyLevel < 10) {
+    frequencyLevel++;
+    freqDisplay.textContent = `頻率: ${frequencyLevel}`;
+    startAutoLaunch();
+  }
+});
+btnDecrease.addEventListener("click", () => {
+  if (frequencyLevel > 1) {
+    frequencyLevel--;
+    freqDisplay.textContent = `頻率: ${frequencyLevel}`;
+    startAutoLaunch();
+  }
+});
+
+function handleUserLaunch(event) {
+  const rect = canvas.getBoundingClientRect();
+  let x, y;
+  if (event.touches && event.touches.length > 0) {
+    x = event.touches[0].clientX - rect.left;
+    y = event.touches[0].clientY - rect.top;
+  } else {
+    x = event.clientX - rect.left;
+    y = event.clientY - rect.top;
+  }
+  launchFirework(x, y);
+}
+
+canvas.addEventListener("click", handleUserLaunch);
+canvas.addEventListener("touchstart", handleUserLaunch);
+
+function animate() {
+  time += 0.05;
+  drawSky();
+  drawSeaSurface();
+
+  for (let fw of fireworks) {
+    fw.update();
+    fw.draw();
+  }
+
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    if (fireworks[i].isDone()) {
+      fireworks.splice(i, 1);
+    }
   }
 
   requestAnimationFrame(animate);
 }
 
-function initStars() {
-  stars = [];
-  for (let i = 0; i < 100; i++) {
-    stars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height * 0.8,
-      r: Math.random() * 1.5 + 0.5
-    });
-  }
-}
-
-const freqRange = document.getElementById("freqRange");
-const freqValue = document.getElementById("freqValue");
-
-freqRange.addEventListener("input", () => {
-  const val = freqRange.value;
-  freqValue.textContent = val + "%";
-  autoFireFrequency = val / 100;
-});
-
-resizeCanvas();
-initStars();
+startAutoLaunch();
 animate();
 </script>
 </body>
